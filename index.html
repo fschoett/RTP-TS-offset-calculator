@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta charset="UTF-8">
+	<title>RTP-TS-CALC</title>
+	<link rel="manifest" href="manifest.webmanifest">
+	<link rel="stylesheet" href="frameworks/spectre.min.css">
+	<link rel="stylesheet" href="frameworks/spectre-exp.min.css">
+	<link rel="stylesheet" href="frameworks/spectre-icons.min.css">
+	<script src="frameworks/jquery-3.4.1.min.js"></script>
+	<script src="js/bigNumber.js"></script>
+	<script src="js/app.js"></script>
+  </head>
+  <body>
+	<div class="container" style="margin-top:100px">
+ 		<h3 class="col-mx-auto col-6 col-md-10 column">RTP-TS Offset Calculator</h3> 
+		<div class="columns">
+			<div class="col-mx-auto column col-6 col-md-10 ">
+				<div class="form-group">	
+					<label class="form-label" for="rec_tmstp">Receiving timestamp [s]</label>
+					<input class="column col-6 col-md-10 form-input" step="any" type="text" id="rec_tmstp" placeholder="REC-TS">
+				</div>
+			</div>
+		</div>	
+		<div class="columns">
+			<div class="col-mx-auto column col-6 col-md-10">
+				<div class="form-group">	
+					<label class="form-label" for="rtp_tmstp">RTP timestamp [ticks]</label>
+					<input class="column col-6 col-md-10 form-input" step="any" type="text" id="rtp_tmstp" placeholder="RTP-TS">
+				</div>
+			</div>	
+		</div>
+		<div class="columns" style="margin-top: 30px">
+			<div class="column col-mx-auto  col-6 col-md-10">
+				<div class="column columns col-6 col-md-10">
+					<div class="column"></div>
+					<button id="calc_btn"class="column col-auto btn btn-primary">CALCULATE</button>
+				</div>
+				
+			</div>	
+		</div>
+		<div class="columns">
+			<div class="col-mx-auto column  col-6 col-md-10">
+				<div class="col-6 col-md-10">
+					<hr>
+				</div>
+			</div>	
+		</div>
+		<div class="columns">
+			<div class="col-mx-auto column  col-6 col-md-10">
+				<label class="form-label" for="delta">Offset RTP-TS [s]</label>
+				<span disabled class="column col-6 col-md-10" id="delta">0</span>
+			</div>	
+		</div>
+
+	</div>
+  </body>
+</html>
+
