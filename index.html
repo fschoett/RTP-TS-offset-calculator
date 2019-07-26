@@ -8,70 +8,121 @@
 	<link rel="stylesheet" href="frameworks/spectre-exp.min.css">
 	<link rel="stylesheet" href="frameworks/spectre-icons.min.css">
 	<link rel="stylesheet" href="stylesheets/dragbox.css">
+	<link rel="stylesheet" href="librarys/chartjs/Chart.css">
+	<script src="librarys/chartjs/Chart.js"></script>
 	<script src="frameworks/jquery-3.4.1.min.js"></script>
 	<script src="js/bigNumber.js"></script>
+	<script src="js/TSOffsetChart.js"></script>
+	<script src="js/OffsetCalculator.js"></script>
 	<script src="js/app.js"></script>
   </head>
   <body>
-	<div class="container" >
-		<div id="upload_container" class=" empty col-6 col-mx-auto upload_container" style="margin-top:5em; margin-bottom:5em">
-		  <div class="empty-icon">
-			<i class="icon icon-upload"></i>
-		  </div>
-		  <p class="empty-title h5">Drop a PCAP here </br> or</p>
-		  <div class="empty-action">
-			<div class="box__input">
-				<input id="file_input" class="inputfile" type="file" name="files[]" data-multiple-caption="{count} files selected" multiple />
-				<label for="file_input"><strong><span id="upload_msg">Choose a file</span></strong></label>
-				<button id="file_upload" class="btn upload_btn is-hidden" type="submit">Upload</button>
+	<div id="main_container" class="container columns" >
+ 		<h3 class="col-mx-auto col-12 col-md-10 column" style="text-align:center">RTP-TS Offset Calculator</h3> 
+		<div id="upload_module" class="col-5" style="margin-top:5em; margin-bottom:5em">
+			<div id="upload_container" class=" empty col-10 col-mx-auto upload_container" >
+			  <div class="empty-icon">
+				<i class="icon icon-upload"></i>
+			  </div>
+			  <p class="empty-title h5">Drop a PCAP here </br> or</p>
+			  <div class="empty-action">
+				<div class="box__input">
+					<input id="file_input" class="inputfile" type="file" name="files[]" data-multiple-caption="{count} files selected" multiple />
+					<label for="file_input"><strong><span id="upload_msg">Choose a file</span></strong></label>
+					<button id="file_upload" class="btn upload_btn is-hidden" type="submit">Upload</button>
+				</div>
+			  </div>
 			</div>
-		  </div>
 		</div>
 		
- 		<h3 class="col-mx-auto col-6 col-md-10 column" style="text-align:center">RTP-TS Offset Calculator</h3> 
-		<div class="columns">
-			<div class="col-mx-auto column col-6 col-md-10 ">
-				<div class="form-group">	
-					<label class="form-label col-mx-auto col-6 col-md-10" for="rec_tmstp">Receiving timestamp [s]</label>
-					<input class="column col-mx-auto col-6 col-md-10 form-input" step="any" type="text" id="rec_tmstp" placeholder="REC-TS">
-				</div>
+		<div class="divider-vert col-2" data-content="OR"></div>
+		
+		<div id="manual_input" class="column col-5" style="margin-top:5em; margin-bottom:5em">		
+			<div>
+				<div class="col-6 col-mx-auto h5">Manual Calculation</div>
 			</div>
-		</div>	
-		<div class="columns">
-			<div class="col-mx-auto column col-6 col-md-10">
-				<div class="form-group">	
-					<label class="form-label col-mx-auto col-6 col-md-10" for="rtp_tmstp">RTP timestamp [ticks]</label>
-					<input class="column col-mx-auto col-6 col-md-10 form-input" step="any" type="text" id="rtp_tmstp" placeholder="RTP-TS">
+			<div class="columns">
+				<div class="column col-10 col-mr-auto">
+					<div class="form-group">	
+						<label class="form-label col-mx-auto col-12 col-md-10" for="rec_tmstp">Receiving timestamp [s]</label>
+						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rec_tmstp" placeholder="REC-TS">
+					</div>
 				</div>
 			</div>	
+			<div class="columns">
+				<div class="column col-10 col-mr-auto">
+					<div class="form-group">	
+						<label class="form-label col-mx-auto col-12 col-md-10" for="rtp_tmstp">RTP timestamp [ticks]</label>
+						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rtp_tmstp" placeholder="RTP-TS">
+					</div>
+				</div>	
+			</div>
+			<div class="columns" style="margin-top: 30px">
+				<div class="column col-10 col-mr-auto">
+					<div class="column columns col-mx-auto col-12 col-md-10">
+						<div class="column"></div>
+						<button id="calc_btn"class="column col-auto btn btn-primary">CALCULATE</button>
+					</div>
+					
+				</div>	
+			</div>
+			<div class="columns">
+				<div class="column col-10 col-mr-auto">
+					<div class="col-mx-auto col-12 col-md-10">
+						<hr>
+					</div>
+				</div>	
+			</div>
+		
 		</div>
-		<div class="columns" style="margin-top: 30px">
-			<div class="column col-mx-auto  col-6 col-md-10">
-				<div class="column columns col-mx-auto col-6 col-md-10">
-					<div class="column"></div>
-					<button id="calc_btn"class="column col-auto btn btn-primary">CALCULATE</button>
-				</div>
+	
+		<div id="result_table" class="columns col-10 col-mx-auto">
+			<table id="test_table" class="table column col-mx-auto col-6 col-md-10 text-dark">
+			  <tbody  class="col-mx-auto col-6 col-md-10">
 				
-			</div>	
-		</div>
-		<div class="columns">
-			<div class="col-mx-auto column  col-6 col-md-10">
-				<div class="col-mx-auto col-6 col-md-10">
-					<hr>
-				</div>
-			</div>	
-		</div>
-		<div class="columns">
-			<div class="col-mx-auto columns col-6 col-md-10">
-				<label class="column col-mx-auto col-6 col-md-10 form-label " for="delta">Offset RTP-TS [s]</label>
-			</div>
+				<tr id="avg_offset" class="">
+				  <td class="">Avg. RTP - TS Offset</td>
+				  <td class="result"><span >0</span></td>
+				  <td class="">[ s ]</td>
+				</tr>
+				<tr id="max_offset" class="">
+				  <td class="">Max. Offset</td>
+				  <td class="result"><span >0</span></td>
+				  <td class="">[ s ]</td>
+				</tr>
+				</tr>
+				</tr>
+				<tr id="min_offset" class="">
+				  <td class="">Min Offset</td>
+				  <td class="result"><span >0</span></td>
+				  <td class="">[ s ]</td>
+				</tr>
+			  </tbody>
+			</table>
 		</div>
 		
-		<div class="columns">
-			<div class="col-mx-auto columns col-6 col-md-10">
-				<span disabled class="column col-mx-auto col-6 col-md-10" id="delta">0</span>
+		
+		<div class="modal" id="upload_modal">
+		  <a href="#close" class="modal-overlay" aria-label="Close"></a>
+		  <div class="modal-container">
+			<div class="modal-header">
+			  <a href="#close" class="btn btn-clear float-right" aria-label="Close"></a>
+			  <div class="modal-title h2">Upload in progress</div>
 			</div>
+			<div class="modal-body">
+			  <div class="content">
+				<div class="h5">The file is currently uploading! Please wait..</div>
+				<div class="loading loading-lg" style="margin-top:4em;"></div>
+				<!-- content here -->
+			  </div>
+			</div>
+			<div class="modal-footer">
+			  ...
+			</div>
+		  </div>
 		</div>
+		
+		<!--<canvas id="offset_chart" width="400" height="400"></canvas>-->
 		
 
 

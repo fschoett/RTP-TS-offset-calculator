@@ -14,9 +14,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+var rtpOffsetCalc;
 
 // Register listeners
 $( document ).ready(function() {
+
+	
+	
+	
     console.log( "ready!" );
 	$("#rtp_tmstp").on("change", ()=>{
 		console.log("RTP value changed. should compute this");
@@ -35,9 +40,15 @@ $( document ).ready(function() {
 		var files = document.getElementById("file_input").files[0];
 		var reader = new FileReader();
 		
+		$("#upload_modal").addClass("active");
+
+		
 		reader.onload = function(evt) {
-			var timestamps = extractTimestamps( new Uint8Array(evt.target.result) );
-			calculateDelta( timestamps.merged_ts_str, timestamps.rtp_ts_dec );
+			//var rtpOffsetCalc = new RTPTSOffsetCalculator ( new Uint8Array(evt.target.result) );
+			rtpOffsetCalc = new RTPTSOffsetCalculator ( new Uint8Array(evt.target.result) );
+			renderResult( rtpOffsetCalc.getAvgMinMax() );
+			$("#upload_modal").removeClass("active");
+
 		};
 		
 		reader.readAsArrayBuffer( files );
@@ -66,56 +77,53 @@ $( document ).ready(function() {
 		});
 	});
 	
+	//initOffsetChart();
+	
 	addDropListener();
 });
+
+
+
+
+const TICKS_TILL_OVERFLOW = Math.pow(2,32);
 
 // Calculate the difference
 function calculateDelta( rec, rtp ){
 	var recStr = new BigNumber(rec);
 	var rtpStr = new BigNumber(rtp);
 	
-	console.table( {recStr, rtpStr});
 	
 	var epochInTicks = recStr.multiply("90000");
-	console.log("Arrival timestamp [ticks] : ", epochInTicks.valueOf(), " ticks");
+	//console.log("Arrival timestamp [ticks] : ", epochInTicks.valueOf(), " ticks");
 	
 	
-	var ticksTillOverflow = Math.pow(2,32);
-	
-	var arrivalTimestamp = epochInTicks.mod(ticksTillOverflow);
-	console.log("Overflowed Arrival Timestamp [ticks] : ", arrivalTimestamp.valueOf(), " ticks");
+	var arrivalTimestamp = epochInTicks.mod(TICKS_TILL_OVERFLOW);
+	//console.log("Overflowed Arrival Timestamp [ticks] : ", arrivalTimestamp.valueOf(), " ticks");
 	
 	var diffInTicks = arrivalTimestamp.subtract(parseInt(rtp));
-	console.log("Delta RTP - Arrival TS [ticks] : ", diffInTicks.valueOf(), " ticks");
+	//console.log("Delta RTP - Arrival TS [ticks] : ", diffInTicks.valueOf(), " ticks");
 	
-	var diffInSecs = diffInTicks.divide("90000");
-	console.log("Delta RTP - Arrival TS [s] : ", diffInSecs.valueOf(), " s");
+	return parseFloat(diffInTicks.valueOf());
+	//var diffInSecs = diffInTicks.divide("90000");
+	//console.log("Delta RTP - Arrival TS [s] : ", diffInSecs.valueOf(), " s");
 	
-	$("#delta").text(diffInSecs.valueOf());
-
-
-
+	//$("#delta").text(diffInSecs.valueOf());
+	
 }
 
-// The alternative function with overflow rounding...
-function calculateDelta2(rec, rtp){
-	var epochInSec  = rec;
-
-	var RTPTimestamp= rtp;
-
-	//2^32
-
-	var epochInTicks = epochInSec * 90000;
-
-
-	var ticksTillOverflow = Math.pow(2,32);
-
-	var arrivalTimestamp = parseInt(epochInTicks % ticksTillOverflow);
-
-	console.log("\nComputed Arrival Timestamp               : " + arrivalTimestamp +" [Ticks]\n");
-	console.log("Delta RTP-Timestamp to Arrival Timestamp : " + (arrivalTimestamp-RTPTimestamp) +" [Ticks]\n");
-	console.log("Delta in secs                            : " + ((arrivalTimestamp-RTPTimestamp)/90000) + " [s]\n");	
-	$("#delta").text(((arrivalTimestamp-RTPTimestamp)/90000));
+function calculateDeltaInTicks( rec, rtp){
+	var recStr = new BigNumber(rec);
+	var rtpStr = new BigNumber(rtp);
+	
+	
+	var epochInTicks = recStr.multiply( CLOCK_SPEED_HZ.toString() );
+	
+	var arrivalTimestampTicks = epochInTicks.mod( TICKS_TILL_OVERFLOW );
+	
+	var diffInTicks = arrivalTimestampTicks.subtract( rtpStr );
+	
+	return parseFloat( diffInTicks.valueOf() );
+	
 }
 
 
@@ -137,18 +145,44 @@ function addDropListener(){
 	$("#upload_msg").text(droppedFiles[0].name);
 	var reader = new FileReader();
 	
+	$("#upload_modal").addClass("active");
+	
 	reader.onload = function(evt) {
-		var timestamps = extractTimestamps( new Uint8Array(evt.target.result) );
-		calculateDelta( timestamps.merged_ts_str, timestamps.rtp_ts_dec );
+		$("#upload_modal").removeClass("active");
+		//var timestamps = extractTimestamps( new Uint8Array(evt.target.result) );
+		//calculateDelta( timestamps.merged_ts_str, timestamps.rtp_ts_dec );
+		var rtpOffsetCalc = new RTPTSOffsetCalculator ( new Uint8Array(evt.target.result) );
+		renderResult( rtpOffsetCalc.getAvgMinMax() );
+		
 	};
 	
 	reader.readAsArrayBuffer(droppedFiles[0]);
   });
 }
 
-function extractTimestamps( result ){
+function renderResult( result ){
+	function round ( num ){
+		const DIGIT_TO_ROUND = 1000000000;
+		return Math.round(num * DIGIT_TO_ROUND) / DIGIT_TO_ROUND;
+	}
+	
+	var rounded_avg = round( result.avgDelta_s );
+	var rounded_min = round( result.minDelta_s );
+	var rounded_max = round( result.maxDelta_s );
+	
+	
+	$("#avg_offset").find("span").text( rounded_avg );
+	$("#min_offset").find("span").text( rounded_min );
+	$("#max_offset").find("span").text( rounded_max );
+}
 
-	//console.log(" Packet : ", result);
+var globalResult;
+
+function extractTimestamps( result ){
+	
+	globalResult =result;
+
+	console.log(" Packet : ", result);
 
 	const SECONDS_INDEX_LOW = 24;
 	const SECONDS_INDEX_HIGH= 27;
@@ -192,7 +226,19 @@ function byteArrayTo32Int( byteArray ){
 	}
 }
 
+function byteArrayTo16Int( byteArray ){
+	if( byteArray.length != 2){
+		console.error("BYTE ARRAY - Wrong length!");
+	}
+	else{
+		return byteArray[0] + byteArray[1]* 256;
+	}
+}
+
 // PCAP PACKET HEADER + GLOBAL HEADER = 40Bytes 
+//ETHERNET
+// IP
+
 // ETHERNET + IP + UDP + RTP = 42Bytes
 // RTP Unwichtige Byte = 4 Bytes
 // --> RTP Timestamp at lower index: 86 - einschl.89

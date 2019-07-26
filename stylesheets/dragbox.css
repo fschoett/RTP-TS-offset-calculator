@@ -1,0 +1,31 @@
+.upload_container.is-dragover {
+	box-shadow: 10px 10px 50px 0px #4240d4;
+	background-color: #FFFFFF;
+	color: #F7F8F9;
+}
+
+.inputfile {
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+.inputfile:focus + label,
+.inputfile + label:hover {
+    color: #4240d4;
+	cursor: pointer;
+}
+
+.upload_btn.is-hidden{
+	display:none;
+}
+
+
+.result{
+	color: #4240d4;
+	font-weight:bold;
+	text-align:right;
+}
