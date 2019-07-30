@@ -11,14 +11,17 @@
 	<link rel="stylesheet" href="librarys/chartjs/Chart.css">
 	<script src="librarys/chartjs/Chart.js"></script>
 	<script src="frameworks/jquery-3.4.1.min.js"></script>
+	<script src="js/Statistics.js"></script>
+  <script src="js/Frame.js"></script>
 	<script src="js/bigNumber.js"></script>
 	<script src="js/TSOffsetChart.js"></script>
 	<script src="js/OffsetCalculator.js"></script>
+  	<script src="js/Charts.js"></script>
 	<script src="js/app.js"></script>
   </head>
   <body>
 	<div id="main_container" class="container columns" >
- 		<h3 class="col-mx-auto col-12 col-md-10 column" style="text-align:center">RTP-TS Offset Calculator</h3> 
+ 		<h3 class="col-mx-auto col-12 col-md-10 column" style="text-align:center">RTP-TS Offset Calculator</h3>
 		<div id="upload_module" class="col-5" style="margin-top:5em; margin-bottom:5em">
 			<div id="upload_container" class=" empty col-10 col-mx-auto upload_container" >
 			  <div class="empty-icon">
@@ -34,28 +37,28 @@
 			  </div>
 			</div>
 		</div>
-		
+
 		<div class="divider-vert col-2" data-content="OR"></div>
-		
-		<div id="manual_input" class="column col-5" style="margin-top:5em; margin-bottom:5em">		
+
+		<div id="manual_input" class="column col-5" style="margin-top:5em; margin-bottom:5em">
 			<div>
 				<div class="col-6 col-mx-auto h5">Manual Calculation</div>
 			</div>
 			<div class="columns">
 				<div class="column col-10 col-mr-auto">
-					<div class="form-group">	
+					<div class="form-group">
 						<label class="form-label col-mx-auto col-12 col-md-10" for="rec_tmstp">Receiving timestamp [s]</label>
 						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rec_tmstp" placeholder="REC-TS">
 					</div>
 				</div>
-			</div>	
+			</div>
 			<div class="columns">
 				<div class="column col-10 col-mr-auto">
-					<div class="form-group">	
+					<div class="form-group">
 						<label class="form-label col-mx-auto col-12 col-md-10" for="rtp_tmstp">RTP timestamp [ticks]</label>
 						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rtp_tmstp" placeholder="RTP-TS">
 					</div>
-				</div>	
+				</div>
 			</div>
 			<div class="columns" style="margin-top: 30px">
 				<div class="column col-10 col-mr-auto">
@@ -63,45 +66,99 @@
 						<div class="column"></div>
 						<button id="calc_btn"class="column col-auto btn btn-primary">CALCULATE</button>
 					</div>
-					
-				</div>	
+
+				</div>
 			</div>
-			<div class="columns">
+			<!--<div class="columns">
 				<div class="column col-10 col-mr-auto">
 					<div class="col-mx-auto col-12 col-md-10">
 						<hr>
 					</div>
-				</div>	
-			</div>
-		
+				</div>
+			</div> -->
+
 		</div>
-	
-		<div id="result_table" class="columns col-10 col-mx-auto">
-			<table id="test_table" class="table column col-mx-auto col-6 col-md-10 text-dark">
-			  <tbody  class="col-mx-auto col-6 col-md-10">
-				
-				<tr id="avg_offset" class="">
-				  <td class="">Avg. RTP - TS Offset</td>
-				  <td class="result"><span >0</span></td>
-				  <td class="">[ s ]</td>
-				</tr>
-				<tr id="max_offset" class="">
-				  <td class="">Max. Offset</td>
-				  <td class="result"><span >0</span></td>
-				  <td class="">[ s ]</td>
-				</tr>
-				</tr>
-				</tr>
-				<tr id="min_offset" class="">
-				  <td class="">Min Offset</td>
-				  <td class="result"><span >0</span></td>
-				  <td class="">[ s ]</td>
-				</tr>
-			  </tbody>
-			</table>
-		</div>
-		
-		
+
+    <div id="result_container" class="columns col-12">
+  		<div id="result_table" class="columns col-3 col-mx-auto">
+        <h5>RTP Offset</h5>
+  			<table id="test_table" class="table column col-mx-auto col-12 col-md-10 text-dark">
+  			  <tbody  class="col-mx-auto col-6 col-md-10">
+
+
+  				<tr id="rtp_offset_max" class="">
+  				  <td class="">Max.</td>
+  				  <td class="result"><span >0</span></td>
+  				  <td class="">[ s ]</td>
+  				</tr>
+          <tr id="rtp_offset_avg" class="">
+            <td class="">Avg.</td>
+            <td class="result"><span >0</span></td>
+            <td class="">[ s ]</td>
+          </tr>
+  				<tr id="rtp_offset_min" class="">
+  				  <td class="">Min.</td>
+  				  <td class="result"><span >0</span></td>
+  				  <td class="">[ s ]</td>
+  				</tr>
+  			  </tbody>
+  			</table>
+        <canvas id="rtp_offset_global_chart"></canvas>
+  		</div>
+
+      <div id="result_table" class="columns col-3 col-mx-auto">
+        <h5>Rx Timestamp Offset</h5>
+        <table id="test_table" class="table column col-mx-auto col-12 col-md-10 text-dark">
+          <tbody  class="col-mx-auto col-6 col-md-10">
+
+          <tr id="rec_offset_max" class="">
+            <td class="">Max.</td>
+            <td class="result"><span >0</span></td>
+            <td class="">[ s ]</td>
+          </tr>
+          <tr id="rec_offset_avg" class="">
+            <td class="">Avg.</td>
+            <td class="result"><span >0</span></td>
+            <td class="">[ s ]</td>
+          </tr>
+          <tr id="rec_offset_min" class="">
+            <td class="">Min</td>
+            <td class="result"><span >0</span></td>
+            <td class="">[ s ]</td>
+          </tr>
+          </tbody>
+        </table>
+        <canvas id="rec_offset_global_chart"></canvas>
+
+      </div>
+
+      <div id="result_table" class="columns col-3 col-mx-auto">
+        <h5>RTP-Rx Delta</h5>
+        <table id="test_table" class="table column col-mx-auto col-12 col-md-10 text-dark">
+          <tbody  class="col-mx-auto col-6 col-md-10">
+
+          <tr id="ts_delta_max" class="">
+            <td class="">Max.</td>
+            <td class="result"><span >0</span></td>
+            <td class="">[ s ]</td>
+          </tr>
+          <tr id="ts_delta_avg" class="">
+            <td class="">Avg.</td>
+            <td class="result"><span >0</span></td>
+            <td class="">[ s ]</td>
+          </tr>
+          <tr id="ts_delta_min" class="">
+            <td class="">Min.</td>
+            <td class="result"><span >0</span></td>
+            <td class="">[ s ]</td>
+          </tr>
+          </tbody>
+        </table>
+        <canvas id="ts_delta_global_chart"></canvas>
+      </div>
+    </div>
+
+
 		<div class="modal" id="upload_modal">
 		  <a href="#close" class="modal-overlay" aria-label="Close"></a>
 		  <div class="modal-container">
@@ -112,21 +169,45 @@
 			<div class="modal-body">
 			  <div class="content">
 				<div class="h5">The file is currently uploading! Please wait..</div>
+        <div class="bar bar-sm">
+          <div id="upload_progress_bar" class="bar-item" role="progressbar" style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
 				<div class="loading loading-lg" style="margin-top:4em;"></div>
 				<!-- content here -->
 			  </div>
 			</div>
 			<div class="modal-footer">
-			  ...
+			  <button class="btn">Cancel</button>
 			</div>
 		  </div>
 		</div>
-		
+
+
+    <div class="active modal modal-lg" id="result_modal">
+		  <a href="#close" class="modal-overlay close_modal" aria-label="Close"></a>
+		  <div class="modal-container">
+			<div class="modal-header">
+        <a href="#close" class="btn btn-clear float-right close_modal" aria-label="Close"></a>
+			  <div class="modal-title h2"></div>
+			</div>
+			<div class="modal-body">
+			  <div class="content">
+  	      <div class="nav_container"></div>
+          <div id="result_chart_container" class="chart_container">
+            <canvas id="frame_chart"></canvas>
+          </div>
+			  </div>
+			</div>
+			<div class="modal-footer">
+			  <button class="btn close_modal ">Cancel</button>
+			</div>
+		  </div>
+		</div>
+
 		<!--<canvas id="offset_chart" width="400" height="400"></canvas>-->
-		
+
 
 
 	</div>
   </body>
 </html>
-

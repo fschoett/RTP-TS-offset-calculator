@@ -6,46 +6,52 @@ const SECONDS_INDEX_LOW = 0;
 const SECONDS_INDEX_HIGH= 3;
 
 const NANO_INDEX_LOW =  4;
-const NANO_INDEX_HIGH = 7; 
+const NANO_INDEX_HIGH = 7;
 
 const PACKET_SIZE_INDEX_LOW = 8;
 const PACKET_SIZE_INDEX_HIGH= 11;
 
-const RTP_TS_INDEX_LOW = 62;
-const RTP_TS_INDEX_HIGH= 65;
+const MARKER_INDEX = 43 + RECORD_HEADER_SIZE;
 
 const DST_PORT_INDEX_LOW = 36 + RECORD_HEADER_SIZE;
 const DST_PORT_INDEX_HIGH= 37 + RECORD_HEADER_SIZE;
 
+const RTP_TS_INDEX_LOW = 62;
+const RTP_TS_INDEX_HIGH= 65;
+
 const NANS_PER_SEC = 1000000000;
 
-const CLOCK_SPEED_HZ = 148000000;
+const CLOCK_SPEED_HZ = 90000;
 
 
 
 class RTPTSOffsetCalculator {
-	constructor( UInt8Array ){
-		this.capture = UInt8Array;
+	constructor( uInt8Array ){
+
 		this.dstPorts = {};
 		this.offsetArray = [];
-		
+
 		this.rtpOffsetArray = [];
 		this.tsOffsetArray  = [];
-		
+
 		this.rtp_diff_arr = [];
 		this.ts_diff_arr = [];
-		
-		this.packets = this.parseCapture();
-		
+
+		this.marker = [];
+
+		this.frames = [];
+
+		this.packets = this.parseCapture( uInt8Array );
+
 	}
-	
-	parseCapture() {
-		var output = []; 
+
+	parseCapture( capture ) {
+		var output = [];
 		var currIndex = GLOBAL_PCAP_HEADER_SIZE_BYTE;
-		
+
 		var seconds;
 		var seconds_dec;
-		var nanos;  
+		var nanos;
 		var nanos_dec;
 		var rtp_ts;
 		var rtp_ts_dec;
@@ -53,220 +59,229 @@ class RTPTSOffsetCalculator {
 		var pckg_length_dec;
 		var dst_port;
 		var dst_port_dec;
-		
-		while( currIndex < this.capture.length ){
-			
-			seconds = this.capture.slice( currIndex+SECONDS_INDEX_LOW, currIndex+SECONDS_INDEX_HIGH+1 );
+		var marker;
+		var has_marker;
+
+		// Extract the packet data
+		while( currIndex < capture.length ){
+
+			seconds = capture.slice( currIndex+SECONDS_INDEX_LOW, currIndex+SECONDS_INDEX_HIGH+1 );
 			seconds_dec = byteArrayTo32Int( seconds );
-			
-			nanos = this.capture.slice( currIndex+NANO_INDEX_LOW, currIndex+NANO_INDEX_HIGH+1);
+
+			nanos = capture.slice( currIndex+NANO_INDEX_LOW, currIndex+NANO_INDEX_HIGH+1);
 			nanos_dec = byteArrayTo32Int( nanos );
-			
-			rtp_ts = this.capture.slice( currIndex+RTP_TS_INDEX_LOW, currIndex+RTP_TS_INDEX_HIGH+1 );
+
+			rtp_ts = capture.slice( currIndex+RTP_TS_INDEX_LOW, currIndex+RTP_TS_INDEX_HIGH+1 );
 			rtp_ts_dec = byteArrayTo32Int( rtp_ts.reverse() );
-			
-			pckgLength = this.capture.slice( currIndex+PACKET_SIZE_INDEX_LOW, currIndex+PACKET_SIZE_INDEX_HIGH+1 );
+
+			pckgLength = capture.slice( currIndex+PACKET_SIZE_INDEX_LOW, currIndex+PACKET_SIZE_INDEX_HIGH+1 );
 			pckg_length_dec = byteArrayTo32Int(  pckgLength );
-			
-			dst_port = this.capture.slice( currIndex+DST_PORT_INDEX_LOW, currIndex+DST_PORT_INDEX_HIGH+1 );
+
+			dst_port = capture.slice( currIndex+DST_PORT_INDEX_LOW, currIndex+DST_PORT_INDEX_HIGH+1 );
 			dst_port_dec = byteArrayTo16Int( dst_port.reverse() );
-			
-			output.push( {seconds_dec, nanos_dec, rtp_ts_dec, pckg_length_dec, dst_port_dec });
+
+			marker = capture.slice( currIndex+MARKER_INDEX, currIndex+MARKER_INDEX+1 );
+
+			if ( marker[0] >=  128 ){
+				has_marker = true;
+				this.marker.push( {currIndex: marker[0]} ) ;
+			}
+			else {
+				has_marker = false;
+			};
+
+
+			output.push( {seconds_dec, nanos_dec, rtp_ts_dec, pckg_length_dec, dst_port_dec, has_marker });
 			if( this.dstPorts[dst_port_dec] ) {
 				this.dstPorts[dst_port_dec] = this.dstPorts[dst_port_dec]+1
 			}
 			else { this.dstPorts[dst_port_dec] = 1 }
-			
+
 			currIndex += pckg_length_dec + RECORD_HEADER_SIZE;
-			
+
 		}
-		
+
+		// Filter the packages so that only the packages with
+		// the most occuring dst port are saved
 		var most_packets_to = Object.keys( this.dstPorts ).reduce( ( a, b ) => this.dstPorts[a] > this.dstPorts[b] ? a : b);
-		
+
 		var output = output.filter( pckt =>{
 			return pckt.dst_port_dec == most_packets_to
 		});
-		
+
 		return output;
 	}
-	
-	getAvgMinMax(){
+
+	getStats(){
+
 		const num_packets = this.packets.length;
-		
+
 		var output = { };
 		this.offsetArray = [];
-		
+
 		var recStr = mergeTS( this.packets[0].seconds_dec, this.packets[0].nanos_dec );
 		var rtp = this.packets[0].rtp_ts_dec;
-		
+
 		var currDelta = calculateDeltaInTicks( recStr, rtp );
 		const startDelta = currDelta;
-		console.log(currDelta);
-		
-		var startSecs = this.packets[0].seconds_dec;
-		var startNanos = this.packets[0].nanos_dec;
-		var startRTP  = this.packets[0].rtp_ts_dec;
-		
-		var maxDelta = {id : 0, val: 0};
-		var minDelta = currDelta;
-		var avgDelta = 0;
-		
-		var avgRTPOffset = 0;
-		var avgTSOffset  = 0;
-		
-		var maxRTPOffset = {id:0, val:0};
-		var minRTPOffset ;		
-		var maxTSOffset  = {id:0, val: 0};
-		var minTSOffset;
-		
+		const clkspd_divided = CLOCK_SPEED_HZ / NANS_PER_SEC;
+
+		var tsOffsetStats = new Statistics(  );
+		var rtpOffsetStats= new Statistics(  );
+		var deltaStats    = new Statistics(  );
+
+		rtpOffsetStats.reset();
+
 		var prev_ts_ticks_diff = 0;
 		var prev_rtp_ticks_diff= 0;
-		
-		
-		
-		this.packets.map( (curr, i ) =>{
-			var currSecs = curr.seconds_dec;
-			var currNanos= curr.nanos_dec;
-			var currRTP = curr.rtp_ts_dec;
-			
-			var secsDiff = currSecs-startSecs;
-			var nanosDiff;
-			
-			//console.table(currDelta,currSecs, prevSecs, currNanos, prevNans, currRTP, prevRTP)
-			
+
+
+		var startSecs  = this.packets[0].seconds_dec;
+		var startNanos = this.packets[0].nanos_dec;
+		var startRTP   = this.packets[0].rtp_ts_dec;
+
+		var secsDiff, nanosDiff;
+		var ts_ticks_diff, rtp_ticks_diff;
+		var currSecs, currNanos, currRTP;
+
+		// For each packet!
+		this.packets.map( (curr, i) => {
+
+			currSecs = curr.seconds_dec;
+			currNanos= curr.nanos_dec;
+			currRTP = curr.rtp_ts_dec;
+
+			secsDiff = currSecs-startSecs;
+
+			// Check for nanos overflow
 			if( currNanos < startNanos ){
-				secsDiff -= 1;
+				secsDiff--;
 				nanosDiff = currNanos-startNanos+NANS_PER_SEC;
 			}
 			else{
 				nanosDiff = currNanos-startNanos;
 			}
-			
-			var clkspd_divided = CLOCK_SPEED_HZ / NANS_PER_SEC;
-			var ts_ticks_diff = secsDiff * CLOCK_SPEED_HZ + nanosDiff * clkspd_divided;
-			var rtp_ticks_diff= currRTP - startRTP;
-			
+
+			// Calculate the delta of the ts/rtp_ts regarding their first values
+			ts_ticks_diff = secsDiff * CLOCK_SPEED_HZ + nanosDiff * clkspd_divided;
+			rtp_ticks_diff= currRTP - startRTP;
+
+			// Calculate the delta between rtp and tp timestamp
 			currDelta = startDelta + ts_ticks_diff - rtp_ticks_diff;
-			
-			this.offsetArray.push( currDelta );
-			
-			(currDelta > maxDelta.val) && (maxDelta = {id:i, val:currDelta} );
-			(currDelta < minDelta ) && (minDelta = currDelta );
-			
-			avgDelta += currDelta/num_packets;
-			
-			// Calculate average RTP and TS offset to previous package
-			// If prev package number is null, dont do anything!
-			if( prev_rtp_ticks_diff ){
-				var currRTPOffset = rtp_ticks_diff - prev_rtp_ticks_diff;
-				
-				if( minRTPOffset ){ (currRTPOffset < minRTPOffset) && (minRTPOffset = currRTPOffset) }
-				else { minRTPOffset = currRTPOffset }	
-				
-				(currRTPOffset > maxRTPOffset.val) && (maxRTPOffset = {id:i, val:currRTPOffset});
 
-				
-				this.rtpOffsetArray.push( currRTPOffset );
-				avgRTPOffset += currRTPOffset;
+			// Add the values to the stats objects
+
+
+			if( prev_rtp_ticks_diff !== undefined ){
+				rtpOffsetStats.addValue( rtp_ticks_diff - prev_rtp_ticks_diff );
 			}
-			if( prev_ts_ticks_diff ){
-				var currTSOffset = ts_ticks_diff  - prev_ts_ticks_diff;
-				
-				if( minTSOffset ){ (currTSOffset < minTSOffset) && (minTSOffset = currTSOffset) }
-				else{ minTSOffset = currTSOffset }
-				
-				(currTSOffset > maxTSOffset.val) && (maxTSOffset = {id:i, val:currTSOffset});
-				
-				this.tsOffsetArray.push( currTSOffset );
-				avgTSOffset  += currTSOffset;
+
+			if( prev_ts_ticks_diff !== undefined ){
+				tsOffsetStats.addValue ( ts_ticks_diff - prev_ts_ticks_diff );
 			}
-			
-			// Set previous package values
-			prev_ts_ticks_diff = ts_ticks_diff ;
-			prev_rtp_ticks_diff= rtp_ticks_diff;
-			
-			this.ts_diff_arr.push(ts_ticks_diff);
-			this.rtp_diff_arr.push(rtp_ticks_diff);
-			
-			
-			
+
+
+
+			deltaStats.addValue( currDelta );
+
+			if( curr.has_marker || i >= this.packets.length ){
+				var newFrame = new Frame();
+				newFrame.index = i;
+				newFrame.set_rtp_offset( rtpOffsetStats.getStats() );
+				newFrame.set_rec_offset( tsOffsetStats.getStats() );
+				newFrame.set_ts_delta( deltaStats.getStats() );
+				this.frames.push( newFrame );
+				tsOffsetStats.reset();
+				rtpOffsetStats.reset();
+				deltaStats.reset();
+			}
+
+
+
+			prev_ts_ticks_diff  = ts_ticks_diff;
+			prev_rtp_ticks_diff = rtp_ticks_diff;
+
 		});
-		
-		output.maxDelta = maxDelta;
-		output.minDelta = minDelta;
-		output.avgDelta = avgDelta;
-		
-		output.maxDelta_s = maxDelta.val / CLOCK_SPEED_HZ;
-		output.minDelta_s = minDelta / CLOCK_SPEED_HZ;
-		output.avgDelta_s = avgDelta / CLOCK_SPEED_HZ;
-		
-		output.avgRTPOffset = avgRTPOffset / num_packets;
-		output.minRTPOffset = minRTPOffset;
-		output.maxRTPOffset = maxRTPOffset;
-		output.avgTSOffset  = avgTSOffset  / num_packets;
-		output.minTSOffset  = minTSOffset;
-		output.maxTSOffset  = maxTSOffset;
-		
-		
-		
-		console.table(output);
-		
+
+
+		// Output all the data :)
+		var deltaStatsResults = deltaStats.getStats();
+		var rtpOffsetStatsResults = rtpOffsetStats.getStats();
+		var tsOffsetStatsResults = tsOffsetStats.getStats();
+
+		output = this.analyzeWholeCapture();
+
 		return output;
-		
+
+
 	}
-	
-	getDataOfPacket( packetIndex ){
-		//console.log(" Packet : ", result);
-		
-		var firstPacketDataIndex;
-		
-		if( packetIndex === 0){
-			firstPacketDataIndex = 24;
-		}
-		else{
-			
+
+	extractChartData(){
+		var keys = {"rtp_offset": {}, "rec_offset":{} , "ts_delta":{} };
+
+		for ( var key in keys ){
+			var maxes = [];
+			var avgs  = [];
+			var mins  = [];
+			var indices=[];
+
+			this.frames.map( (curr,i) =>{
+				maxes.push( curr[key].max.val );
+				avgs.push( curr[key].avg );
+				mins.push( curr[key].min.val );
+				indices.push( curr.index );
+			});
+
+			keys[ key ] = { maxes:maxes, avgs:avgs, mins:mins, indices:indices };
 		}
 
-		const SECONDS_INDEX_LOW = 24;
-		const SECONDS_INDEX_HIGH= 27;
-		var seconds = result.slice( SECONDS_INDEX_LOW, SECONDS_INDEX_HIGH+1 );
-		var seconds_dec = byteArrayTo32Int( seconds );
-		
-		const NANO_INDEX_LOW = 28;
-		const NANO_INDEX_HIGH = 31; 
-		var nanos = result.slice( NANO_INDEX_LOW, NANO_INDEX_HIGH+1);
-		var nanos_dec = byteArrayTo32Int( nanos );
-		
-		const RTP_TS_INDEX_LOW = 86;
-		const RTP_TS_INDEX_HIGH= 89;
-		var rtp_ts = result.slice( RTP_TS_INDEX_LOW, RTP_TS_INDEX_HIGH+1 );
-		var rtp_ts_dec = byteArrayTo32Int( rtp_ts.reverse() );
-		
-		var merged_ts_str = mergeTS( seconds_dec, nanos_dec );
-		
-		var output = { seconds_dec, nanos_dec, rtp_ts_dec, merged_ts_str }
-		
-		$("#rec_tmstp").val( merged_ts_str );
-		$("#rtp_tmstp").val( rtp_ts_dec );
-		
-		console.table(output);
-		return output;
+		return keys;
+
 	}
-	
-	getFirstPckgDelta(){
-		
+
+	getFrameChartData(  key, frameIndex ){
+		var frame = this.frames[ frameIndex ][ key ];
+		if( frame ){
+			var maxes = new Array( frame.data.length ).fill( frame.max.val );
+			var avgs  = new Array( frame.data.length ).fill( frame.avg );
+			var mins  = new Array( frame.data.length ).fill( frame.min.val );
+			var vals  = frame.data;
+			var indices = Array.from( Array( frame.data.length).keys() );
+			return { maxes:maxes, avgs:avgs, mins:mins, vals:vals, indices:indices}
+		}
 	}
-	
-	getAvgDelte(){
-		
+
+	analyzeWholeCapture(){
+
+		var keys = {"rtp_offset": {}, "rec_offset":{} , "ts_delta":{} };
+
+		for( var key in keys ){
+			keys[ key ].max = {index:0, val:0};
+			keys[ key ].avg = 0;
+		}
+
+		for ( var i=0; i< this.frames.length; i++){
+
+			for( var key in keys ){
+				var currFrame = this.frames[i][ key ];
+
+				(currFrame.max.val > keys[key].max.val ) && ( keys[key].max = currFrame.max);
+				keys[key].avg += currFrame.avg;
+
+				if( !keys[key].min ) keys[key].min ={index: currFrame.min.index, val:currFrame.min.val};
+
+
+				(currFrame.min.val < keys[key].min.val ) && (keys[key].min = currFrame.min);
+			}
+
+		}
+
+		for ( var key in keys ) {
+			keys[ key ].avg = keys[ key ].avg / this.frames.length;
+		}
+
+		var output = keys;
+		return output
 	}
-	
-	dropAllTS(){
-		
-	}
-	
-	dropAllRTP_TS(){
-		
-	}
-	
+
 }
