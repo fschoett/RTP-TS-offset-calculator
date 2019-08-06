@@ -14,12 +14,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
 var  rtpOffsetCalc;
 // Register listeners
 $( document ).ready(function() {
 
+	ResultChartModal.init();
+	Settings.init();
+
+
+	Settings.onChange( setClockSpeed );
+
+	function setClockSpeed( newVals ){
+		CLOCK_SPEED_HZ = newVals.rtpClock;
+	}
 
 	document.getElementById("file_input").files = undefined;
 
@@ -34,7 +41,9 @@ $( document ).ready(function() {
 	});
 	$("#calc_btn").on("click", ()=>{
 		console.log("RTP value changed. should compute this");
-		calculateDeltaInTicks($("#rec_tmstp").val(), $("#rtp_tmstp").val());
+		var result = calculateDeltaInTicks($("#rec_tmstp").val(), $("#rtp_tmstp").val());
+		$("#result_delta_manual_calc-t").text(result);
+		$("#result_delta_manual_calc-s").text(result/CLOCK_SPEED_HZ);
 	});
 
 
@@ -147,27 +156,33 @@ function addDropListener(){
   .on('drop', function(e) {
     droppedFiles = e.originalEvent.dataTransfer.files;
 	//console.log(droppedFiles[0].name);
-	$("#upload_msg").text(droppedFiles[0].name);
+		$("#upload_msg").text(droppedFiles[0].name);
 
-	$("#upload_modal").addClass("active");
-	var reader = new FileReader();
+		$("#upload_modal").addClass("active");
 
-	reader.onload = function(evt) {
-		$("#upload_modal").removeClass("active");
-		//var timestamps = extractTimestamps( new Uint8Array(evt.target.result) );
-		//calculateDelta( timestamps.merged_ts_str, timestamps.rtp_ts_dec );
-		//var rtpOffsetCalc = new RTPTSOffsetCalculator ( new Uint8Array(evt.target.result) );
-		//renderResult( rtpOffsetCalc.getAvgMinMax() );
-		//reader = undefined;
-		//rtpOffsetCalc = undefined;
+		var reader = new FileReader();
+		reader.onload = function(evt) {
+			//var rtpOffsetCalc = new RTPTSOffsetCalculator ( new Uint8Array(evt.target.result) );
+			var arr =  new Uint8Array(evt.target.result) ;
+			rtpOffsetCalc =  new RTPTSOffsetCalculator ( arr );
+			renderResult( rtpOffsetCalc.getStats(), rtpOffsetCalc.extractChartData(), rtpOffsetCalc );
+			$("#upload_modal").removeClass("active");
 
-	};
+			var tmpChartData = rtpOffsetCalc;
+			//var firstFrameTestChart = new TSChart ( { el_id:"result_modal", data:})
 
-	reader.onprogress = function( evt ){
-		console.log( evt );
-	}
+			reader = undefined;
+			//rtpOffsetCalc = undefined;
+			arr = undefined;
 
-	reader.readAsArrayBuffer(droppedFiles[0]);
+
+		};
+
+		reader.onprogress = function( evt ){
+			$("#upload_progress_bar").css("width", ((evt.loaded / evt.total) * 100).toString()+"%" );
+		}
+
+		reader.readAsArrayBuffer(droppedFiles[0]);
   });
 }
 
@@ -209,114 +224,41 @@ function renderResult( result, chartData, calculator ){
 	var rtpGlobalChart = new TSChart( {
 		el_id:"rtp_offset_global_chart" ,
 		data:chartData.rtp_offset,
-		onClick: (evt, arr) => {
-			var frameChartData = calculator.getFrameChartData("rtp_offset", arr[0]._index);
-			renderFrameChart( frameChartData )}
+		ylabel: "RTP Timestamp Offset [Ticks]",
+		onClick: (e,x,pts) => {
+			renderFrameChart( "rtp_offset", calculator );
+		}
 	});
 
 	var recGlobalChart = new TSChart( {
 		el_id:"rec_offset_global_chart" ,
 		data:chartData.rec_offset,
-		onClick: (evt, arr) => {
-			var frameChartData = calculator.getFrameChartData("rec_offset", arr[0]._index);
-			renderFrameChart( frameChartData )}
-	});
-
-console.log(chartData.ts_delta);
-	var tsDeltaGlobalChart = new TSChart( {
-		el_id:"ts_delta_global_chart" ,
-		data:chartData.ts_delta,
-		onClick: (evt, arr) => {
-			var frameChartData = calculator.getFrameChartData("ts_delta", arr[0]._index);
-			renderFrameChart( frameChartData );
+		ylabel: "RX Timestamp Offset [Ticks]",
+		onClick: (e,x,pts) => {
+			renderFrameChart( "rec_offset", calculator );
 		}
 	});
 
+	var tsDeltaGlobalChart = new TSChart( {
+		el_id:"ts_delta_global_chart" ,
+		ylabel: "RTP - RX Timestamp Delta [Ticks]",
+		data:chartData.ts_delta,
+		onClick: (e,x,pts) => {
+			renderFrameChart( "ts_delta", calculator );
+		}
+	});
 
 
 	rtpGlobalChart.render();
 	recGlobalChart.render();
 	tsDeltaGlobalChart.render();
+}
 
-
+function renderFrameChart( key, calc ){
+	if( !ResultChartModal.check_if_open() ){
+		ResultChartModal.open();
+	}
+	ResultChartModal.setSource( key, calc );
 }
 
 var frameChart;
-
-function renderFrameChart( frameChartData ){
-	if( frameChart ){
-		frameChart.destroy();
-	}
-	var onClick2 = function(){console.log("CLIIICK");}
-	frameChart = new TSChart( { el_id:"frame_chart", data:frameChartData, onClick:onClick2 });
-	frameChart.render();
-	$("#result_modal").addClass("active");
-}
-
-
-var globalResult;
-
-function extractTimestamps( result ){
-
-	globalResult =result;
-
-	console.log(" Packet : ", result);
-
-	const SECONDS_INDEX_LOW = 24;
-	const SECONDS_INDEX_HIGH= 27;
-	var seconds = result.slice( SECONDS_INDEX_LOW, SECONDS_INDEX_HIGH+1 );
-	var seconds_dec = byteArrayTo32Int( seconds );
-
-	const NANO_INDEX_LOW = 28;
-	const NANO_INDEX_HIGH = 31;
-	var nanos = result.slice( NANO_INDEX_LOW, NANO_INDEX_HIGH+1);
-	var nanos_dec = byteArrayTo32Int( nanos );
-
-	const RTP_TS_INDEX_LOW = 86;
-	const RTP_TS_INDEX_HIGH= 89;
-	var rtp_ts = result.slice( RTP_TS_INDEX_LOW, RTP_TS_INDEX_HIGH+1 );
-	var rtp_ts_dec = byteArrayTo32Int( rtp_ts.reverse() );
-
-	var merged_ts_str = mergeTS( seconds_dec, nanos_dec );
-
-	var output = { seconds_dec, nanos_dec, rtp_ts_dec, merged_ts_str }
-
-	$("#rec_tmstp").val( merged_ts_str );
-	$("#rtp_tmstp").val( rtp_ts_dec );
-
-	console.table(output);
-	return output;
-}
-
-function mergeTS (seconds, nanos){
-	var s_str = seconds.toString();
-	var n_str = nanos.toString();
-	var output = s_str + "." + n_str;
-	return output
-}
-
-function byteArrayTo32Int( byteArray ){
-	if( byteArray.length != 4){
-		console.error("BYTE ARRAY - Wrong length!");
-	}
-	else{
-		return byteArray[0] + byteArray[1]* 256 + byteArray[2]*Math.pow(256,2) + byteArray[3]*Math.pow(256,3);
-	}
-}
-
-function byteArrayTo16Int( byteArray ){
-	if( byteArray.length != 2){
-		console.error("BYTE ARRAY - Wrong length!");
-	}
-	else{
-		return byteArray[0] + byteArray[1]* 256;
-	}
-}
-
-// PCAP PACKET HEADER + GLOBAL HEADER = 40Bytes
-//ETHERNET
-// IP
-
-// ETHERNET + IP + UDP + RTP = 42Bytes
-// RTP Unwichtige Byte = 4 Bytes
-// --> RTP Timestamp at lower index: 86 - einschl.89

@@ -7,7 +7,7 @@ class Statistics {
 
 		// avg_sec is the alternative when the set size is known
 		this.avg_sec = 0;
-		this.max = {index: 0 , val:0};
+		this.max = undefined;
 		this.min = undefined;
 		this.avg = 0;
 	}
@@ -27,8 +27,13 @@ class Statistics {
 
 		//( newValue > this.max.val ) && ( this.max = {index: index, val:newValue} );
 
-		if( newValue > this.max.val ) {
-			this.max = {index: index, val:parseInt(newValue)};
+		if( this.max !== undefined ){
+			if( newValue > this.max.val ) {
+				this.max = {index: index, val:parseInt(newValue)};
+			}
+		}
+		else{
+			this.max = {index:index, val:parseInt(newValue)};
 		}
 
 		// If the max data set size is known:
@@ -60,7 +65,7 @@ class Statistics {
 	reset(){
 		this.data = [];
 		this.avg_sec = 0;
-		this.max = {index: 0 , val:0};
+		this.max = undefined;
 		this.min = undefined;
 		this.avg = 0;
 	}

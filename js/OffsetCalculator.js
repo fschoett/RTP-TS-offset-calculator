@@ -19,9 +19,9 @@ const DST_PORT_INDEX_HIGH= 37 + RECORD_HEADER_SIZE;
 const RTP_TS_INDEX_LOW = 62;
 const RTP_TS_INDEX_HIGH= 65;
 
-const NANS_PER_SEC = 1000000000;
+const NANS_PER_SEC = 1000000000.0;
 
-const CLOCK_SPEED_HZ = 90000;
+var CLOCK_SPEED_HZ = 27000000.0;
 
 
 
@@ -105,7 +105,7 @@ class RTPTSOffsetCalculator {
 		// the most occuring dst port are saved
 		var most_packets_to = Object.keys( this.dstPorts ).reduce( ( a, b ) => this.dstPorts[a] > this.dstPorts[b] ? a : b);
 
-		var output = output.filter( pckt =>{
+		output = output.filter( pckt =>{
 			return pckt.dst_port_dec == most_packets_to
 		});
 
@@ -126,9 +126,9 @@ class RTPTSOffsetCalculator {
 		const startDelta = currDelta;
 		const clkspd_divided = CLOCK_SPEED_HZ / NANS_PER_SEC;
 
-		var tsOffsetStats = new Statistics(  );
-		var rtpOffsetStats= new Statistics(  );
-		var deltaStats    = new Statistics(  );
+		var tsOffsetStats = new Statistics();
+		var rtpOffsetStats= new Statistics();
+		var deltaStats    = new Statistics();
 
 		rtpOffsetStats.reset();
 
@@ -194,6 +194,9 @@ class RTPTSOffsetCalculator {
 				tsOffsetStats.reset();
 				rtpOffsetStats.reset();
 				deltaStats.reset();
+
+				//console.log( "prev ts ", prev_ts_ticks_diff);
+				//console.log( "ts ", ts_ticks_diff);
 			}
 
 
@@ -229,7 +232,8 @@ class RTPTSOffsetCalculator {
 				maxes.push( curr[key].max.val );
 				avgs.push( curr[key].avg );
 				mins.push( curr[key].min.val );
-				indices.push( curr.index );
+				//indices.push( curr.index );
+				indices.push( i );
 			});
 
 			keys[ key ] = { maxes:maxes, avgs:avgs, mins:mins, indices:indices };

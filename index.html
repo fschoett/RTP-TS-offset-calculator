@@ -1,114 +1,152 @@
 <!DOCTYPE html>
 <html>
   <head>
-	<meta charset="UTF-8">
-	<title>RTP-TS-CALC</title>
-	<link rel="manifest" href="manifest.webmanifest">
-	<link rel="stylesheet" href="frameworks/spectre.min.css">
-	<link rel="stylesheet" href="frameworks/spectre-exp.min.css">
-	<link rel="stylesheet" href="frameworks/spectre-icons.min.css">
-	<link rel="stylesheet" href="stylesheets/dragbox.css">
-	<link rel="stylesheet" href="librarys/chartjs/Chart.css">
-	<script src="librarys/chartjs/Chart.js"></script>
-	<script src="frameworks/jquery-3.4.1.min.js"></script>
-	<script src="js/Statistics.js"></script>
-  <script src="js/Frame.js"></script>
-	<script src="js/bigNumber.js"></script>
-	<script src="js/TSOffsetChart.js"></script>
-	<script src="js/OffsetCalculator.js"></script>
+  	<meta charset="UTF-8">
+  	<title>RTP-TS-CALC</title>
+  	<link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="librarys/dygraph/dygraph.css">
+
+    <link rel="stylesheet" href="frameworks/spectre.min.css">
+  	<link rel="stylesheet" href="frameworks/spectre-exp.min.css">
+  	<link rel="stylesheet" href="frameworks/spectre-icons.min.css">
+
+    <link rel="stylesheet" href="stylesheets/dragbox.css">
+    <link rel="stylesheet" href="stylesheets/result_chart_modal.css">
+    <link rel="stylesheet" href="stylesheets/layout.css">
+    <link rel="stylesheet" href="stylesheets/results.css">
+    <link rel="stylesheet" href="stylesheets/main.css">
+
+  	<script src="frameworks/jquery-3.4.1.min.js"></script>
+    <script src="librarys/dygraph/dygraph.js"></script>
+
+    <script src="js/Statistics.js"></script>
+    <script src="js/Frame.js"></script>
+  	<script src="js/bigNumber.js"></script>
+  	<script src="js/TSOffsetChart.js"></script>
+  	<script src="js/OffsetCalculator.js"></script>
   	<script src="js/Charts.js"></script>
-	<script src="js/app.js"></script>
+    <script src="js/ResultChartModal.js"></script>
+    <script src="js/Settings.js"></script>
+    <script src="js/Utils.js"></script>
+  	<script src="js/app.js"></script>
   </head>
   <body>
-	<div id="main_container" class="container columns" >
- 		<h3 class="col-mx-auto col-12 col-md-10 column" style="text-align:center">RTP-TS Offset Calculator</h3>
-		<div id="upload_module" class="col-5" style="margin-top:5em; margin-bottom:5em">
-			<div id="upload_container" class=" empty col-10 col-mx-auto upload_container" >
-			  <div class="empty-icon">
-				<i class="icon icon-upload"></i>
-			  </div>
-			  <p class="empty-title h5">Drop a PCAP here </br> or</p>
-			  <div class="empty-action">
-				<div class="box__input">
-					<input id="file_input" class="inputfile" type="file" name="files[]" data-multiple-caption="{count} files selected" multiple />
-					<label for="file_input"><strong><span id="upload_msg">Choose a file</span></strong></label>
-					<button id="file_upload" class="btn upload_btn is-hidden" type="submit">Upload</button>
-				</div>
-			  </div>
-			</div>
-		</div>
 
-		<div class="divider-vert col-2" data-content="OR"></div>
+  <div id="main_container" class="main_container container" >
 
-		<div id="manual_input" class="column col-5" style="margin-top:5em; margin-bottom:5em">
-			<div>
-				<div class="col-6 col-mx-auto h5">Manual Calculation</div>
-			</div>
-			<div class="columns">
-				<div class="column col-10 col-mr-auto">
-					<div class="form-group">
-						<label class="form-label col-mx-auto col-12 col-md-10" for="rec_tmstp">Receiving timestamp [s]</label>
-						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rec_tmstp" placeholder="REC-TS">
-					</div>
-				</div>
-			</div>
-			<div class="columns">
-				<div class="column col-10 col-mr-auto">
-					<div class="form-group">
-						<label class="form-label col-mx-auto col-12 col-md-10" for="rtp_tmstp">RTP timestamp [ticks]</label>
-						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rtp_tmstp" placeholder="RTP-TS">
-					</div>
-				</div>
-			</div>
-			<div class="columns" style="margin-top: 30px">
-				<div class="column col-10 col-mr-auto">
-					<div class="column columns col-mx-auto col-12 col-md-10">
-						<div class="column"></div>
-						<button id="calc_btn"class="column col-auto btn btn-primary">CALCULATE</button>
-					</div>
+    <div class="heading column col-mx-auto col-12 col-md-10" style="display:flex; justify-content: center;">
+      <div class="logo "></div>
+      <h3 class="" style="text-align:center; align-self:center; margin-left:auto;">RTP-TS Offset Calculator</h3>
+      <div id="btn-open_settings" class="btn" style="justify-self:center; margin-left:auto; align-self:center"><i class="icon icon-menu"></i></div>
+    </div>
 
-				</div>
-			</div>
-			<!--<div class="columns">
-				<div class="column col-10 col-mr-auto">
-					<div class="col-mx-auto col-12 col-md-10">
-						<hr>
-					</div>
-				</div>
-			</div> -->
+    <div class="inputs columns column col-12">
 
-		</div>
-
-    <div id="result_container" class="columns col-12">
-  		<div id="result_table" class="columns col-3 col-mx-auto">
-        <h5>RTP Offset</h5>
-  			<table id="test_table" class="table column col-mx-auto col-12 col-md-10 text-dark">
-  			  <tbody  class="col-mx-auto col-6 col-md-10">
-
-
-  				<tr id="rtp_offset_max" class="">
-  				  <td class="">Max.</td>
-  				  <td class="result"><span >0</span></td>
-  				  <td class="">[ s ]</td>
-  				</tr>
-          <tr id="rtp_offset_avg" class="">
-            <td class="">Avg.</td>
-            <td class="result"><span >0</span></td>
-            <td class="">[ s ]</td>
-          </tr>
-  				<tr id="rtp_offset_min" class="">
-  				  <td class="">Min.</td>
-  				  <td class="result"><span >0</span></td>
-  				  <td class="">[ s ]</td>
-  				</tr>
-  			  </tbody>
-  			</table>
-        <canvas id="rtp_offset_global_chart"></canvas>
+      <div id="upload_module" class="column col-5" style="margin-top:5em; margin-bottom:5em">
+  			<div id="upload_container" class=" empty col-10 col-mx-auto upload_container" >
+  			  <div class="empty-icon">
+  				<i class="icon icon-upload"></i>
+  			  </div>
+  			  <p class="empty-title h5">Drop a PCAP here </br> or</p>
+  			  <div class="empty-action">
+  				<div class="box__input">
+  					<input id="file_input" class="inputfile" type="file" name="files[]" data-multiple-caption="{count} files selected" multiple />
+  					<label for="file_input"><strong><span id="upload_msg">Choose a file</span></strong></label>
+  					<button id="file_upload" class="btn upload_btn is-hidden" type="submit">Upload</button>
+  				</div>
+  			  </div>
+  			</div>
   		</div>
 
-      <div id="result_table" class="columns col-3 col-mx-auto">
+  		<div class="divider-vert col-2 column" data-content="OR"></div>
+
+  		<div id="manual_input" class="col-5 column" style="margin-top:5em; margin-bottom:5em">
+  			<div>
+  				<div class="col-6 col-mx-auto h5">Manual Calculation</div>
+  			</div>
+  			<div class="columns">
+  				<div class="column col-10 col-mr-auto">
+  					<div class="form-group">
+  						<label class="form-label col-mx-auto col-12 col-md-10" for="rec_tmstp">Receiving timestamp [s]</label>
+  						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rec_tmstp" placeholder="REC-TS">
+  					</div>
+  				</div>
+  			</div>
+  			<div class="columns">
+  				<div class="column col-10 col-mr-auto">
+  					<div class="form-group">
+  						<label class="form-label col-mx-auto col-12 col-md-10" for="rtp_tmstp">RTP timestamp [ticks]</label>
+  						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rtp_tmstp" placeholder="RTP-TS">
+  					</div>
+  				</div>
+  			</div>
+
+  			<div class="columns" style="margin-top: 30px">
+  				<div class="column col-10 col-mr-auto">
+  					<div class="column columns col-mx-auto col-12 col-md-10">
+  						<div class="column"></div>
+  						<button id="calc_btn"class="column col-auto btn btn-primary">CALCULATE</button>
+  					</div>
+  				</div>
+  			</div>
+
+        <div class="columns">
+          <div class="column col-10 col-mr-auto">
+            <h5>Results:</h5>
+            <table  class="table column col-mx-auto col-12 col-md-10 text-dark">
+      			  <tbody  class="col-mx-auto col-6 col-md-10">
+      				<tr  class="">
+      				  <td class="">Delta</td>
+      				  <td class="result"><span id="result_delta_manual_calc-s">0</span></td>
+      				  <td class="">[ s ]</td>
+      				</tr>
+              <tr  class="">
+                <td class="">Delta</td>
+                <td class="result"><span id="result_delta_manual_calc-t">0</span></td>
+                <td class="">[ s ]</td>
+              </tr>
+      			  </tbody>
+      			</table>
+          </div>
+        </div>
+
+  		</div>
+
+    </div>
+
+    <div id="result_container" class="max_dims columns col-11 col-mx-auto">
+  		<div class="single_result column col-4 col-mx-auto result_table">
+
+          <h5>RTP Timestamp Offset</h5>
+    			<table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
+    			  <tbody  class="col-mx-auto col-6 col-md-10">
+
+
+    				<tr id="rtp_offset_max" class="">
+    				  <td class="">Max.</td>
+    				  <td class="result"><span >0</span></td>
+    				  <td class="">[ s ]</td>
+    				</tr>
+            <tr id="rtp_offset_avg" class="">
+              <td class="">Avg.</td>
+              <td class="result"><span >0</span></td>
+              <td class="">[ s ]</td>
+            </tr>
+    				<tr id="rtp_offset_min" class="">
+    				  <td class="">Min.</td>
+    				  <td class="result"><span >0</span></td>
+    				  <td class="">[ s ]</td>
+    				</tr>
+    			  </tbody>
+    			</table>
+          <!--<canvas id="rtp_offset_global_chart"></canvas>-->
+          <div id="rtp_offset_global_chart"  class="column col-12 result_chart" ></div>
+
+  		</div>
+
+      <div class="single_result columns col-4 col-mx-auto result_table">
         <h5>Rx Timestamp Offset</h5>
-        <table id="test_table" class="table column col-mx-auto col-12 col-md-10 text-dark">
+        <table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
           <tbody  class="col-mx-auto col-6 col-md-10">
 
           <tr id="rec_offset_max" class="">
@@ -128,13 +166,14 @@
           </tr>
           </tbody>
         </table>
-        <canvas id="rec_offset_global_chart"></canvas>
+        <!--<canvas id="rec_offset_global_chart"></canvas>-->
+        <div id="rec_offset_global_chart" class="result_chart" ></div>
 
       </div>
 
-      <div id="result_table" class="columns col-3 col-mx-auto">
-        <h5>RTP-Rx Delta</h5>
-        <table id="test_table" class="table column col-mx-auto col-12 col-md-10 text-dark">
+      <div class="single_result columns col-4 col-mx-auto result_table">
+        <h5>RTP-Rx Timestamp Delta</h5>
+        <table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
           <tbody  class="col-mx-auto col-6 col-md-10">
 
           <tr id="ts_delta_max" class="">
@@ -154,7 +193,7 @@
           </tr>
           </tbody>
         </table>
-        <canvas id="ts_delta_global_chart"></canvas>
+        <div id="ts_delta_global_chart" class="result_chart" ></div>
       </div>
     </div>
 
@@ -182,19 +221,39 @@
 		  </div>
 		</div>
 
-
-    <div class="active modal modal-lg" id="result_modal">
+    <!-- MODALS -->
+    <div id="result_modal" class="modal modal-lg" >
 		  <a href="#close" class="modal-overlay close_modal" aria-label="Close"></a>
-		  <div class="modal-container">
+		  <div class="modal-container result_chart_modal">
 			<div class="modal-header">
         <a href="#close" class="btn btn-clear float-right close_modal" aria-label="Close"></a>
-			  <div class="modal-title h2"></div>
+			  <div class="modal-title h2">Detailed View</div>
 			</div>
 			<div class="modal-body">
-			  <div class="content">
-  	      <div class="nav_container"></div>
-          <div id="result_chart_container" class="chart_container">
-            <canvas id="frame_chart"></canvas>
+			  <div class="single_result_modal_content content container">
+  	      <div class="nav_container columns max_dims">
+            <div class="nav_chart_container column col-6 max_height">
+              <h4>Overview of capture: </h4>
+              <div id="nav_chart" class="max_dims"></div>
+              <!-- <canvas id="nav_chart" class=""></canvas> -->
+            </div>
+            <div class="nav_btn column col-6" style="margin-top:auto">
+              <div class="columns">
+                <div id="nav_btn" class="column col-mr-auto">
+                  <button id="prev_frame_btn" class="btn"><i class="icon icon-arrow-left"></i></button>
+                  <button id="next_frame_btn" class="btn column col-mr-auto"><i class="icon icon-arrow-right"></i></button>
+                </div>
+                <div class="column col-10">
+                  <label for="frame_selection_input">Type in a frame number</label>
+                  <input id="frame_selection_input" type="number" class="form-input"/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="result_chart_container" class="chart_container max_dims">
+            <h4>All packets of choosen frame: </h4>
+            <div id="frame_chart" class="max_dims" ></div>
           </div>
 			  </div>
 			</div>
@@ -204,10 +263,30 @@
 		  </div>
 		</div>
 
-		<!--<canvas id="offset_chart" width="400" height="400"></canvas>-->
+    <div id="settings_modal" class="modal">
+      <a href="#close" class="modal-overlay close_modal" aria-label="Close"></a>
+      <div class="modal-container">
 
+        <div class="modal-header">
+          <a href="#close" class="btn btn-clear float-right close_modal" aria-label="Close"></a>
+          <div class="modal-title h2"> Settings </div>
+        </div>
 
+        <div class="modal-body">
+          <label for="RTP_clock_selection">RTP Clock Speed</label>
+          <select id="RTP_clock_selection" class="form-select">
+            <option value="90000"> 90 KHz </option>
+            <option value="27000000"> 27 MHz </option>
+          </select>
+        </div>
 
+        <div class="modal-footer">
+          <button id="btn-settings_confirm" class="btn btn-primary close_modal">Ok</button>
+          <button class="btn close_modal ">Cancel</button>
+        </div>
+
+      </div>
+    </div>
 	</div>
   </body>
 </html>

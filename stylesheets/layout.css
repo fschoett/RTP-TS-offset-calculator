@@ -1,0 +1,60 @@
+.main_container{
+  height:100%;
+  width:100%;
+
+  display: grid;
+  grid-template-rows: 1fr 4fr 4fr;
+  grid-template-areas: "heading" "inputs" "results";
+}
+
+.result_container{
+  grid-area: results;
+}
+
+
+.heading{
+  height: 100%;
+  grid-area: heading;
+  margin: 0;
+}
+
+.inputs{
+  grid-area: inputs;
+  height:100%;
+}
+
+
+.single_result{
+  height:100%;
+  display: grid;
+  grid-template-rows: .5fr 2fr 4fr;
+}
+
+.max_dims{
+  height:100%;
+  width:100%;
+}
+
+.max_height{
+  height:100%;
+}
+
+.result_table{
+
+  height: 100%;
+}
+
+.result_chart{
+  padding:5px;
+}
+
+.modal-container{
+  display: grid;
+  grid-template-rows: 1fr 5fr 1fr;
+}
+
+.single_result_modal_content{
+  display: grid;
+  grid-template-rows: 2fr 4fr;
+  height:100%;
+}
