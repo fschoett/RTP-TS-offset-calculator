@@ -22,18 +22,18 @@ class Statistics {
 		}
 		else{
 			//console.log("This min is undefined, going to change this! New val: ", newValue)
-			this.min = {index:index, val:parseInt(newValue)};
+			this.min = {index:index, val:parseFloat(newValue)};
 		}
 
 		//( newValue > this.max.val ) && ( this.max = {index: index, val:newValue} );
 
 		if( this.max !== undefined ){
 			if( newValue > this.max.val ) {
-				this.max = {index: index, val:parseInt(newValue)};
+				this.max = {index: index, val:parseFloat(newValue)};
 			}
 		}
 		else{
-			this.max = {index:index, val:parseInt(newValue)};
+			this.max = {index:index, val:parseFloat(newValue)};
 		}
 
 		// If the max data set size is known:

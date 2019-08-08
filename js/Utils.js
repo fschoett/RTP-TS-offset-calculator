@@ -1,6 +1,7 @@
 function mergeTS (seconds, nanos){
 	var s_str = seconds.toString();
 	var n_str = nanos.toString();
+	n_str = "0".repeat(9-n_str.length) + n_str;
 	var output = s_str + "." + n_str;
 	return output
 }

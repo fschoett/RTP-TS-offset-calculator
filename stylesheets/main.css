@@ -8,9 +8,6 @@ canvas{
 }
 
 .logo{
-  justify-self: center;
-  margin-left: 0;
-  width: 10%;
   background-image: url("../images/BCE_logo.png");
   background-repeat: no-repeat;
   background-size: contain;

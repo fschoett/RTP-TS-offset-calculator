@@ -85,8 +85,8 @@ class TSChart {
   render (){
     var container = document.getElementById( this.el_id );
 
-    var containerSizeX = container.clientWidth;
-    var containerSizeY = container.clientHeight;
+    var containerSizeX = container.offsetWidth;
+    var containerSizeY = container.offsetHeight;
 
     var mappedVals;
     var labels;
@@ -123,6 +123,12 @@ class TSChart {
 
           //console.log( canvas, area, g);
         },
+        legend:"always",
+        maxNumberWidth:9,
+        xRangePad:2,
+        digitsAfterDecimal: 20,
+        labelsKMB:true,
+        axisLabelWidth: 80,
         colors: [
           MAX_COLOR,
           AVG_COLOR,

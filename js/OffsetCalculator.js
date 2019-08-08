@@ -21,7 +21,10 @@ const RTP_TS_INDEX_HIGH= 65;
 
 const NANS_PER_SEC = 1000000000.0;
 
-var CLOCK_SPEED_HZ = 27000000.0;
+var CLOCK_SPEED_HZ = 90000;
+
+
+var tmpArr = [];
 
 
 
@@ -40,6 +43,7 @@ class RTPTSOffsetCalculator {
 		this.marker = [];
 
 		this.frames = [];
+		this.firstPacketDeltas = [];
 
 		this.packets = this.parseCapture( uInt8Array );
 
@@ -123,7 +127,7 @@ class RTPTSOffsetCalculator {
 		var rtp = this.packets[0].rtp_ts_dec;
 
 		var currDelta = calculateDeltaInTicks( recStr, rtp );
-		const startDelta = currDelta;
+		var startDelta = currDelta;
 		const clkspd_divided = CLOCK_SPEED_HZ / NANS_PER_SEC;
 
 		var tsOffsetStats = new Statistics();
@@ -135,6 +139,10 @@ class RTPTSOffsetCalculator {
 		var prev_ts_ticks_diff = 0;
 		var prev_rtp_ticks_diff= 0;
 
+		var prevRTP;
+		var prevSecs;
+		var prevNanos;
+
 
 		var startSecs  = this.packets[0].seconds_dec;
 		var startNanos = this.packets[0].nanos_dec;
@@ -144,6 +152,9 @@ class RTPTSOffsetCalculator {
 		var ts_ticks_diff, rtp_ticks_diff;
 		var currSecs, currNanos, currRTP;
 
+
+		var is_firstFramePacket = true;
+
 		// For each packet!
 		this.packets.map( (curr, i) => {
 
@@ -151,40 +162,54 @@ class RTPTSOffsetCalculator {
 			currNanos= curr.nanos_dec;
 			currRTP = curr.rtp_ts_dec;
 
-			secsDiff = currSecs-startSecs;
-
-			// Check for nanos overflow
-			if( currNanos < startNanos ){
-				secsDiff--;
-				nanosDiff = currNanos-startNanos+NANS_PER_SEC;
+			// Calculate RTP TS Offset;
+			if( prevRTP !== undefined ){
+				rtpOffsetStats.addValue( currRTP - prevRTP );
 			}
 			else{
-				nanosDiff = currNanos-startNanos;
+				rtpOffsetStats.addValue( 0 );
 			}
+			prevRTP = currRTP;
 
-			// Calculate the delta of the ts/rtp_ts regarding their first values
-			ts_ticks_diff = secsDiff * CLOCK_SPEED_HZ + nanosDiff * clkspd_divided;
-			rtp_ticks_diff= currRTP - startRTP;
+			// Calculate Rec. TS Offset;
+			if( prevSecs !== undefined ){
+				secsDiff = currSecs-prevSecs;
 
-			// Calculate the delta between rtp and tp timestamp
-			currDelta = startDelta + ts_ticks_diff - rtp_ticks_diff;
-
-			// Add the values to the stats objects
-
-
-			if( prev_rtp_ticks_diff !== undefined ){
-				rtpOffsetStats.addValue( rtp_ticks_diff - prev_rtp_ticks_diff );
+				// Check for nanos overflow
+				if( currNanos < prevNanos ){
+					secsDiff--;
+					nanosDiff = currNanos-prevNanos+NANS_PER_SEC;
+				}
+				else{
+					nanosDiff = currNanos-prevNanos;
+				}
+				// Calculate the delta of the ts/rtp_ts regarding their first values
+				ts_ticks_diff = secsDiff * CLOCK_SPEED_HZ + nanosDiff * clkspd_divided;
+				tsOffsetStats.addValue( ts_ticks_diff );
 			}
-
-			if( prev_ts_ticks_diff !== undefined ){
-				tsOffsetStats.addValue ( ts_ticks_diff - prev_ts_ticks_diff );
+			else{
+				tsOffsetStats.addValue( 0 );
 			}
+			prevSecs = currSecs;
+			prevNanos= currNanos;
 
+			if( is_firstFramePacket ){
+				is_firstFramePacket = false;
 
+				recStr = mergeTS( currSecs, currNanos );
+				currDelta = calculateDeltaInTicks( recStr, currRTP );
+
+				this.firstPacketDeltas.push( currDelta );
+
+			}
+			else{
+				currDelta = currDelta + ts_ticks_diff - (currRTP - prevRTP);
+			}
 
 			deltaStats.addValue( currDelta );
 
 			if( curr.has_marker || i >= this.packets.length ){
+				is_firstFramePacket = true;
 				var newFrame = new Frame();
 				newFrame.index = i;
 				newFrame.set_rtp_offset( rtpOffsetStats.getStats() );
@@ -194,7 +219,6 @@ class RTPTSOffsetCalculator {
 				tsOffsetStats.reset();
 				rtpOffsetStats.reset();
 				deltaStats.reset();
-
 				//console.log( "prev ts ", prev_ts_ticks_diff);
 				//console.log( "ts ", ts_ticks_diff);
 			}

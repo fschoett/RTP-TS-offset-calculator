@@ -4,6 +4,9 @@
   	<meta charset="UTF-8">
   	<title>RTP-TS-CALC</title>
   	<link rel="manifest" href="manifest.webmanifest">
+
+    <link rel="icon" type="image/png" href="images/favicon.png" sizes="32x32">
+
     <link rel="stylesheet" href="librarys/dygraph/dygraph.css">
 
     <link rel="stylesheet" href="frameworks/spectre.min.css">
@@ -35,14 +38,20 @@
   <div id="main_container" class="main_container container" >
 
     <div class="heading column col-mx-auto col-12 col-md-10" style="display:flex; justify-content: center;">
-      <div class="logo "></div>
-      <h3 class="" style="text-align:center; align-self:center; margin-left:auto;">RTP-TS Offset Calculator</h3>
-      <div id="btn-open_settings" class="btn" style="justify-self:center; margin-left:auto; align-self:center"><i class="icon icon-menu"></i></div>
+      <div class="columns" style="width:100%">
+        <div class="logo column col-1 "></div>
+        <h3 class="column col-10" style="text-align:center">RTP-TS Offset Calculator</h3>
+        <div class="column col-1" style="margin-top:auto">
+          <button id="btn-open_settings" class="btn">
+            <i class="icon icon-menu" ></i>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="inputs columns column col-12">
+    <div class="inputs is-active columns column col-12">
 
-      <div id="upload_module" class="column col-5" style="margin-top:5em; margin-bottom:5em">
+      <div id="upload_module" class="column col-5" style="margin:auto">
   			<div id="upload_container" class=" empty col-10 col-mx-auto upload_container" >
   			  <div class="empty-icon">
   				<i class="icon icon-upload"></i>
@@ -60,7 +69,7 @@
 
   		<div class="divider-vert col-2 column" data-content="OR"></div>
 
-  		<div id="manual_input" class="col-5 column" style="margin-top:5em; margin-bottom:5em">
+  		<div id="manual_input" class="col-5 column" style="margin:auto">
   			<div>
   				<div class="col-6 col-mx-auto h5">Manual Calculation</div>
   			</div>
@@ -114,7 +123,7 @@
 
     </div>
 
-    <div id="result_container" class="max_dims columns col-11 col-mx-auto">
+    <div id="result_container" class="result_container max_dims columns col-11 col-mx-auto">
   		<div class="single_result column col-4 col-mx-auto result_table">
 
           <h5>RTP Timestamp Offset</h5>
