@@ -4,7 +4,8 @@ const Settings = ( function (){
     MODAL_EL_ID: "settings_modal",
     CLOCK_SEL_EL_ID: "RTP_clock_selection",
     BTN_CONFIRM_EL_ID: "btn-settings_confirm",
-    BTN_OPEN_SETTINGS_EL_ID: "btn-open_settings"
+    BTN_OPEN_SETTINGS_EL_ID: "btn-open_settings",
+    CHKBX_IGN_FIRST_PCKT_EL_ID: "chkbx_ign_first_pckt"
   }
 
   var currValues;
@@ -26,8 +27,11 @@ const Settings = ( function (){
     var rtpClockStr = document.getElementById( CONFIG.CLOCK_SEL_EL_ID ).value;
     var rtpClockInt = parseInt( rtpClockStr );
 
+    var ignoreFirstPckt = document.getElementById(CONFIG.CHKBX_IGN_FIRST_PCKT_EL_ID ).checked ;
+
     output = {
-      rtpClock: rtpClockInt
+      rtpClock: rtpClockInt,
+      ignrFirstPckt : ignoreFirstPckt
     }
 
     return output;
@@ -37,6 +41,13 @@ const Settings = ( function (){
     // Select element
     var sel = document.getElementById( CONFIG.CLOCK_SEL_EL_ID );
     sel.addEventListener( "change" , ()=>{
+      currValues = extractValues();
+      callCallbacks();
+    });
+
+    // Ignore First Packet
+    var chkbx = document.getElementById( CONFIG.CHKBX_IGN_FIRST_PCKT_EL_ID );
+    chkbx.addEventListener( "change", ()=>{
       currValues = extractValues();
       callCallbacks();
     });

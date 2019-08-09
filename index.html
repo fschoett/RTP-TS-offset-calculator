@@ -49,7 +49,7 @@
       </div>
     </div>
 
-    <div class="inputs is-active columns column col-12">
+    <div id="input_container" class="inputs is-active columns column col-12">
 
       <div id="upload_module" class="column col-5" style="margin:auto">
   			<div id="upload_container" class=" empty col-10 col-mx-auto upload_container" >
@@ -76,7 +76,7 @@
   			<div class="columns">
   				<div class="column col-10 col-mr-auto">
   					<div class="form-group">
-  						<label class="form-label col-mx-auto col-12 col-md-10" for="rec_tmstp">Receiving timestamp [s]</label>
+  						<label class="form-label col-mx-auto col-12 col-md-10" for="rec_tmstp">Receiver Timestamp [ s ]</label>
   						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rec_tmstp" placeholder="REC-TS">
   					</div>
   				</div>
@@ -84,7 +84,7 @@
   			<div class="columns">
   				<div class="column col-10 col-mr-auto">
   					<div class="form-group">
-  						<label class="form-label col-mx-auto col-12 col-md-10" for="rtp_tmstp">RTP timestamp [ticks]</label>
+  						<label class="form-label col-mx-auto col-12 col-md-10" for="rtp_tmstp">RTP Timestamp [ Ticks ]</label>
   						<input class="column col-mx-auto col-12 col-md-10 form-input" step="any" type="text" id="rtp_tmstp" placeholder="RTP-TS">
   					</div>
   				</div>
@@ -112,7 +112,7 @@
               <tr  class="">
                 <td class="">Delta</td>
                 <td class="result"><span id="result_delta_manual_calc-t">0</span></td>
-                <td class="">[ s ]</td>
+                <td class="">[ Ticks ]</td>
               </tr>
       			  </tbody>
       			</table>
@@ -123,8 +123,72 @@
 
     </div>
 
-    <div id="result_container" class="result_container max_dims columns col-11 col-mx-auto">
-  		<div class="single_result column col-4 col-mx-auto result_table">
+    <div id="result_container" class="result_container   max_dims columns col-11 col-mx-auto">
+
+      <div class="max_dims" style="display:flex">
+        <h5 id="btn_go_back" class="btn" style="text-align:center; margin:auto;"> Go back </h5>
+      </div>
+
+      <div class="single_result result_table">
+
+          <h5>RTP Timestamps</h5>
+    			<table  class="result_table table text-dark">
+    			  <tbody  class="">
+
+
+    				<tr id="rtp_ts_max" class="">
+    				  <td class="">Max.</td>
+    				  <td class="result"><span >0</span></td>
+    				  <td class="">[ s ]</td>
+    				</tr>
+            <tr id="rtp_ts_avg" class="">
+              <td class="">Avg.</td>
+              <td class="result"><span >0</span></td>
+              <td class="">[ s ]</td>
+            </tr>
+    				<tr id="rtp_ts_min" class="">
+    				  <td class="">Min.</td>
+    				  <td class="result"><span >0</span></td>
+    				  <td class="">[ s ]</td>
+    				</tr>
+    			  </tbody>
+    			</table>
+          <!--<canvas id="rtp_offset_global_chart"></canvas>-->
+          <div id="rtp_ts_global_chart"  class="result_chart" ></div>
+
+  		</div>
+
+      <div class="single_result result_table">
+
+          <h5>Receiver Timestamps</h5>
+          <table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
+            <tbody  class="col-mx-auto col-6 col-md-10">
+
+
+            <tr id="rec_ts_max" class="">
+              <td class="">Max.</td>
+              <td class="result"><span >0</span></td>
+              <td class="">[ s ]</td>
+            </tr>
+            <tr id="rec_ts_avg" class="">
+              <td class="">Avg.</td>
+              <td class="result"><span >0</span></td>
+              <td class="">[ s ]</td>
+            </tr>
+            <tr id="rec_ts_min" class="">
+              <td class="">Min.</td>
+              <td class="result"><span >0</span></td>
+              <td class="">[ s ]</td>
+            </tr>
+            </tbody>
+          </table>
+          <!--<canvas id="rtp_offset_global_chart"></canvas>-->
+          <div id="rec_ts_global_chart"  class="result_chart" ></div>
+
+      </div>
+
+
+  		<div class="single_result result_table">
 
           <h5>RTP Timestamp Offset</h5>
     			<table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
@@ -149,11 +213,11 @@
     			  </tbody>
     			</table>
           <!--<canvas id="rtp_offset_global_chart"></canvas>-->
-          <div id="rtp_offset_global_chart"  class="column col-12 result_chart" ></div>
+          <div id="rtp_offset_global_chart"  class="result_chart" ></div>
 
   		</div>
 
-      <div class="single_result columns col-4 col-mx-auto result_table">
+      <div class="single_result result_table">
         <h5>Rx Timestamp Offset</h5>
         <table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
           <tbody  class="col-mx-auto col-6 col-md-10">
@@ -180,7 +244,7 @@
 
       </div>
 
-      <div class="single_result columns col-4 col-mx-auto result_table">
+      <div class="single_result result_table">
         <h5>RTP-Rx Timestamp Delta</h5>
         <table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
           <tbody  class="col-mx-auto col-6 col-md-10">
@@ -287,6 +351,10 @@
             <option value="90000"> 90 KHz </option>
             <option value="27000000"> 27 MHz </option>
           </select>
+          <label class="form-switch">
+            <input id="chkbx_ign_first_pckt" type="checkbox">
+            <i class="form-icon"></i> Ignore first packet in RTP-TS-Offset analysis
+          </label>
         </div>
 
         <div class="modal-footer">

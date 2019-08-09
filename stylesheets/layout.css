@@ -11,7 +11,8 @@
   grid-area: content;
   display: grid;
   grid-template-columns: repeat( 3, 1fr );
-  grid-template-rows: : repeat( 2, 1fr );
+  grid-template-rows: repeat( 2, 1fr );
+  grid-gap: 50px;
 }
 
 .result_container{
@@ -57,7 +58,7 @@
 }
 
 .result_chart{
-  padding:5px;
+  /*padding:5px;*/
 }
 
 .modal-container{

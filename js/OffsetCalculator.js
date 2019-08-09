@@ -22,6 +22,7 @@ const RTP_TS_INDEX_HIGH= 65;
 const NANS_PER_SEC = 1000000000.0;
 
 var CLOCK_SPEED_HZ = 90000;
+var ignoreFirstPacket = false;
 
 
 var tmpArr = [];
@@ -36,6 +37,9 @@ class RTPTSOffsetCalculator {
 
 		this.rtpOffsetArray = [];
 		this.tsOffsetArray  = [];
+
+		this.rtpTSArr = [];
+		this.recTSArr = [];
 
 		this.rtp_diff_arr = [];
 		this.ts_diff_arr = [];
@@ -94,8 +98,13 @@ class RTPTSOffsetCalculator {
 				has_marker = false;
 			};
 
-
-			output.push( {seconds_dec, nanos_dec, rtp_ts_dec, pckg_length_dec, dst_port_dec, has_marker });
+			output.push( {
+				seconds_dec,
+				nanos_dec,
+				rtp_ts_dec,
+				pckg_length_dec,
+				dst_port_dec,
+				has_marker });
 			if( this.dstPorts[dst_port_dec] ) {
 				this.dstPorts[dst_port_dec] = this.dstPorts[dst_port_dec]+1
 			}
@@ -134,6 +143,9 @@ class RTPTSOffsetCalculator {
 		var rtpOffsetStats= new Statistics();
 		var deltaStats    = new Statistics();
 
+		var rtpTSStats    = new Statistics();
+		var recTSStats    = new Statistics();
+
 		rtpOffsetStats.reset();
 
 		var prev_ts_ticks_diff = 0;
@@ -151,7 +163,6 @@ class RTPTSOffsetCalculator {
 		var secsDiff, nanosDiff;
 		var ts_ticks_diff, rtp_ticks_diff;
 		var currSecs, currNanos, currRTP;
-
 
 		var is_firstFramePacket = true;
 
@@ -171,7 +182,7 @@ class RTPTSOffsetCalculator {
 			}
 			prevRTP = currRTP;
 
-			// Calculate Rec. TS Offset;
+
 			if( prevSecs !== undefined ){
 				secsDiff = currSecs-prevSecs;
 
@@ -185,11 +196,22 @@ class RTPTSOffsetCalculator {
 				}
 				// Calculate the delta of the ts/rtp_ts regarding their first values
 				ts_ticks_diff = secsDiff * CLOCK_SPEED_HZ + nanosDiff * clkspd_divided;
-				tsOffsetStats.addValue( ts_ticks_diff );
+
+				if( ignoreFirstPacket && is_firstFramePacket ){
+					tsOffsetStats.addValue( 0 );
+				}
+				else{
+					tsOffsetStats.addValue( ts_ticks_diff );
+				}
+
 			}
 			else{
 				tsOffsetStats.addValue( 0 );
 			}
+
+			// Calculate Rec. TS Offset;
+
+
 			prevSecs = currSecs;
 			prevNanos= currNanos;
 
@@ -208,6 +230,11 @@ class RTPTSOffsetCalculator {
 
 			deltaStats.addValue( currDelta );
 
+			rtpTSStats.addValue( curr.rtp_ts_dec );
+			recTSStats.addValue( curr.nanos_dec );
+
+
+
 			if( curr.has_marker || i >= this.packets.length ){
 				is_firstFramePacket = true;
 				var newFrame = new Frame();
@@ -215,10 +242,15 @@ class RTPTSOffsetCalculator {
 				newFrame.set_rtp_offset( rtpOffsetStats.getStats() );
 				newFrame.set_rec_offset( tsOffsetStats.getStats() );
 				newFrame.set_ts_delta( deltaStats.getStats() );
+				newFrame.set_rtpTs( rtpTSStats.getStats() );
+				newFrame.set_recTs( recTSStats.getStats() );
 				this.frames.push( newFrame );
+
 				tsOffsetStats.reset();
 				rtpOffsetStats.reset();
 				deltaStats.reset();
+				rtpTSStats.reset();
+				recTSStats.reset();
 				//console.log( "prev ts ", prev_ts_ticks_diff);
 				//console.log( "ts ", ts_ticks_diff);
 			}
@@ -235,6 +267,8 @@ class RTPTSOffsetCalculator {
 		var deltaStatsResults = deltaStats.getStats();
 		var rtpOffsetStatsResults = rtpOffsetStats.getStats();
 		var tsOffsetStatsResults = tsOffsetStats.getStats();
+		var rtpTsStatsResults = rtpTSStats.getStats();
+		var recTsStatsResults = recTSStats.getStats();
 
 		output = this.analyzeWholeCapture();
 
@@ -244,7 +278,13 @@ class RTPTSOffsetCalculator {
 	}
 
 	extractChartData(){
-		var keys = {"rtp_offset": {}, "rec_offset":{} , "ts_delta":{} };
+		var keys = {
+			"rtp_offset": {},
+			"rec_offset":{} ,
+			"ts_delta":{},
+			"rtpTs":{},
+			"recTs": {}
+		};
 
 		for ( var key in keys ){
 			var maxes = [];
@@ -281,7 +321,13 @@ class RTPTSOffsetCalculator {
 
 	analyzeWholeCapture(){
 
-		var keys = {"rtp_offset": {}, "rec_offset":{} , "ts_delta":{} };
+		var keys = {
+			"rtp_offset": {},
+			"rec_offset": {},
+			"ts_delta":   {},
+			"rtpTs": {},
+			"recTs": {}
+		};
 
 		for( var key in keys ){
 			keys[ key ].max = {index:0, val:0};

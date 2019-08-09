@@ -86,7 +86,7 @@ class TSChart {
     var container = document.getElementById( this.el_id );
 
     var containerSizeX = container.offsetWidth;
-    var containerSizeY = container.offsetHeight;
+    var containerSizeY = container.clientHeight;
 
     var mappedVals;
     var labels;

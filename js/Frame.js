@@ -6,6 +6,9 @@ class Frame {
     this.rtp_offset = {};
     this.rec_offset = {};
     this.ts_delta   = {};
+
+    this.rtpTs = {};
+    this.recTs = {};
   }
 
   set_rtp_offset( new_offset ){
@@ -25,6 +28,20 @@ class Frame {
       this.ts_delta = new_delta;
     }
   }
+
+  set_rtpTs( newRtpTs ){
+    if( this.checkInput( newRtpTs )){
+      this.rtpTs = newRtpTs;
+    }
+  }
+
+  set_recTs( newRecTs ){
+    if( this.checkInput( newRecTs )){
+      this.recTs = newRecTs;
+    }
+  }
+
+
 
   checkInput( input ){
     if( input.min && input.max  && input.avg && input.std_dev && input.vals ){

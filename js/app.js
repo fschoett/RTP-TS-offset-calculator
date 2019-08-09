@@ -20,25 +20,25 @@ $( document ).ready(function() {
 
 	ResultChartModal.init();
 	Settings.init();
-
-
 	Settings.onChange( setClockSpeed );
+	Settings.onChange( setIgnoreFirstPckt );
 
 	function setClockSpeed( newVals ){
 		CLOCK_SPEED_HZ = newVals.rtpClock;
 	}
 
+	function setIgnoreFirstPckt( newVals ){
+		console.log(" CHKBX Changed : ",newVals.ignrFirstPckt )
+		ignoreFirstPacket = newVals.ignrFirstPckt;
+	}
+
+	$("#btn_go_back").on("click", toggleView);
+
 	document.getElementById("file_input").files = undefined;
 
-    console.log( "ready!" );
-	$("#rtp_tmstp").on("change", ()=>{
-		console.log("RTP value changed. should compute this");
-		//calculateDelta($("#rec_tmstp").val(), $("#rtp_tmstp").val());
-	});
-	$("#rec_tmstp").on("change", ()=>{
-		console.log("RTP value changed. should compute this");
-		//calculateDelta($("#rec_tmstp").val(), $("#rtp_tmstp").val());
-	});
+  console.log( "ready!" );
+
+
 	$("#calc_btn").on("click", ()=>{
 		console.log("RTP value changed. should compute this");
 		var result = calculateDeltaInTicks($("#rec_tmstp").val(), $("#rtp_tmstp").val());
@@ -61,6 +61,7 @@ $( document ).ready(function() {
 
 		var reader = new FileReader();
 		reader.onload = function(evt) {
+			toggleView();
 			//var rtpOffsetCalc = new RTPTSOffsetCalculator ( new Uint8Array(evt.target.result) );
 			var arr =  new Uint8Array(evt.target.result) ;
 			rtpOffsetCalc =  new RTPTSOffsetCalculator ( arr );
@@ -112,7 +113,16 @@ $( document ).ready(function() {
 	addDropListener();
 });
 
+function toggleView(){
+	const CONFIG = {
+		DIV_RESULT_CONTAINER_EL_ID : "result_container",
+		DIV_INFO_CONTAINER_EL_ID   : "input_container"
+	}
 
+	$("#"+ CONFIG.DIV_RESULT_CONTAINER_EL_ID ).toggleClass("is-active");
+	$("#"+ CONFIG.DIV_INFO_CONTAINER_EL_ID ).toggleClass("is-active");
+
+}
 
 
 const TICKS_TILL_OVERFLOW = Math.pow(2,32);
@@ -124,11 +134,7 @@ function calculateDeltaInTicks( rec, rtp){
 
 	var epochInTicks = recStr.multiply( CLOCK_SPEED_HZ.toString() );
 
-	console.log( "Epoch in Ticks : ", epochInTicks.valueOf());
-	console.log( "rtpStr  : ", rtpStr.valueOf() );
-
 	var arrivalTimestampTicks = epochInTicks.mod( TICKS_TILL_OVERFLOW );
-	console.log("Arrival Timestamp in Ticks : ", arrivalTimestampTicks.valueOf())
 
 	var diffInTicks = arrivalTimestampTicks.subtract( rtpStr );
 
@@ -196,9 +202,18 @@ function renderResult( result, chartData, calculator ){
 	var rounded_min = round( result.minDelta_s );
 	var rounded_max = round( result.maxDelta_s );
 
+	var rounded_rtp_ts_min = round( result.rtpTs.min.val );
+	var rounded_rtp_ts_max = result.rtpTs.max.val ;
+	var rounded_rtp_ts_avg = round( result.rtpTs.avg );
+
+	var rounded_rec_ts_min = round( result.recTs.min.val );
+	var rounded_rec_ts_max = result.recTs.max.val ;
+	var rounded_rec_ts_avg = round( result.recTs.avg );
+
 	var rounded_rtp_offset_min = round( result.rtp_offset.min.val );
 	var rounded_rtp_offset_max = result.rtp_offset.max.val ;
 	var rounded_rtp_offset_avg = round( result.rtp_offset.avg );
+
 
 	var rounded_rec_offset_min = round( result.rec_offset.min.val );
 	var rounded_rec_offset_max = round( result.rec_offset.max.val );
@@ -207,6 +222,14 @@ function renderResult( result, chartData, calculator ){
 	var rounded_ts_delta_min = round( result.ts_delta.min.val );
 	var rounded_ts_delta_max = round( result.ts_delta.max.val );
 	var rounded_ts_delta_avg = round( result.ts_delta.avg );
+
+	$("#rtp_ts_max").find("span").text( rounded_rtp_ts_max );
+	$("#rtp_ts_avg").find("span").text( rounded_rtp_ts_avg );
+	$("#rtp_ts_min").find("span").text( rounded_rtp_ts_min );
+
+	$("#rec_ts_max").find("span").text( rounded_rec_ts_max );
+	$("#rec_ts_avg").find("span").text( rounded_rec_ts_avg );
+	$("#rec_ts_min").find("span").text( rounded_rec_ts_min );
 
 	$("#rtp_offset_avg").find("span").text( rounded_rtp_offset_avg );
 	$("#rtp_offset_max").find("span").text( rounded_rtp_offset_max );
@@ -220,6 +243,23 @@ function renderResult( result, chartData, calculator ){
 	$("#ts_delta_max").find("span").text( rounded_ts_delta_max );
 	$("#ts_delta_min").find("span").text( rounded_ts_delta_min );
 
+	var rtpTsGlobalChart = new TSChart( {
+		el_id:"rtp_ts_global_chart" ,
+		data:chartData.rtpTs,
+		ylabel: "RTP Timestamps [Ticks]",
+		onClick: (e,x,pts) => {
+			renderFrameChart( "rtpTs", calculator );
+		}
+	});
+
+	var recTsGlobalChart = new TSChart( {
+		el_id:"rec_ts_global_chart" ,
+		data:chartData.recTs,
+		ylabel: "REC Timestamps [Ticks]",
+		onClick: (e,x,pts) => {
+			renderFrameChart( "recTs", calculator );
+		}
+	});
 
 	var rtpGlobalChart = new TSChart( {
 		el_id:"rtp_offset_global_chart" ,
@@ -248,7 +288,8 @@ function renderResult( result, chartData, calculator ){
 		}
 	});
 
-
+	rtpTsGlobalChart.render();
+	recTsGlobalChart.render();
 	rtpGlobalChart.render();
 	recGlobalChart.render();
 	tsDeltaGlobalChart.render();
