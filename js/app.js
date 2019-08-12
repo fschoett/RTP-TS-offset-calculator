@@ -150,7 +150,7 @@ function onFileUpload( droppedFile ){
 		$("#upload_progress_bar").css("width", newWidth );
 	}
 
-	reader.readAsArrayBuffer( files );
+	reader.readAsArrayBuffer( droppedFile );
 }
 
 function renderResult( result, chartData, calculator ){
