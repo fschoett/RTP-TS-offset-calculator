@@ -1,14 +1,7 @@
 const NANS_PER_SEC = 1000000000.0;
-
-var CLOCK_SPEED_HZ = 90000;
 var ignoreFirstPacket = false;
 
-
-var tmpArr = [];
-
-
-
-class RTPTSOffsetCalculator {
+class RTP_TS_Analyzer {
 	constructor( parsedPcap ){
 
 		this.marker  = parsedPcap.markerArr;
@@ -30,11 +23,8 @@ class RTPTSOffsetCalculator {
 		this.rtp_diff_arr = [];
 		this.ts_diff_arr = [];
 
-
 		this.frames = [];
 		this.firstPacketDeltas = [];
-
-
 	}
 
 	getStats(){
@@ -44,7 +34,10 @@ class RTPTSOffsetCalculator {
 		var output = { };
 		this.offsetArray = [];
 
-		var recStr = mergeTS( this.packets[0].seconds_dec, this.packets[0].nanos_dec );
+		var recStr = mergeTS(
+			this.packets[0].seconds_dec,
+			this.packets[0].nanos_dec
+		);
 		var rtp = this.packets[0].rtp_ts_dec;
 
 		var currDelta = calculateDeltaInTicks( recStr, rtp );
@@ -66,7 +59,6 @@ class RTPTSOffsetCalculator {
 		var prevRTP;
 		var prevSecs;
 		var prevNanos;
-
 
 		var startSecs  = this.packets[0].seconds_dec;
 		var startNanos = this.packets[0].nanos_dec;
@@ -141,7 +133,6 @@ class RTPTSOffsetCalculator {
 			}
 
 			deltaStats.addValue( currDelta );
-
 			rtpTSStats.addValue( curr.rtp_ts_dec );
 			recTSStats.addValue( curr.nanos_dec );
 
@@ -174,15 +165,7 @@ class RTPTSOffsetCalculator {
 
 		});
 
-
-		// Output all the data :)
-		var deltaStatsResults = deltaStats.getStats();
-		var rtpOffsetStatsResults = rtpOffsetStats.getStats();
-		var tsOffsetStatsResults = tsOffsetStats.getStats();
-		var rtpTsStatsResults = rtpTSStats.getStats();
-		var recTsStatsResults = recTSStats.getStats();
-
-		output = this.analyzeWholeCapture();
+		output = this.globalStats();
 
 		return output;
 
@@ -231,8 +214,10 @@ class RTPTSOffsetCalculator {
 		}
 	}
 
-	analyzeWholeCapture(){
+	globalStats(){
 
+		// Keys of the frames array of which the min,max avg values should be
+		// computed
 		var keys = {
 			"rtp_offset": {},
 			"rec_offset": {},
@@ -241,29 +226,20 @@ class RTPTSOffsetCalculator {
 			"recTs": {}
 		};
 
-		for( var key in keys ){
-			keys[ key ].max = {index:0, val:0};
-			keys[ key ].avg = 0;
-		}
+		// Extract global max, min and avg values for the respective key
+		for ( var key in keys ){
+			keys[key] = this.frames.reduce( (acc, val) => {
+				acc.min = val[ key ].min.val < acc.min ? val[ key ].min.val : acc.min;
+				acc.max = val[ key ].max.val > acc.max ? val[ key ].max.val : acc.max;
+				acc.avg += val[ key ].avg;
+				return acc
+			}, {
+				min : this.frames[0][key].min.val,
+				avg : 0,
+				max : this.frames[0][key].max.val
+			});
 
-		for ( var i=0; i< this.frames.length; i++){
-
-			for( var key in keys ){
-				var currFrame = this.frames[i][ key ];
-
-				(currFrame.max.val > keys[key].max.val ) && ( keys[key].max = currFrame.max);
-				keys[key].avg += currFrame.avg;
-
-				if( !keys[key].min ) keys[key].min ={index: currFrame.min.index, val:currFrame.min.val};
-
-
-				(currFrame.min.val < keys[key].min.val ) && (keys[key].min = currFrame.min);
-			}
-
-		}
-
-		for ( var key in keys ) {
-			keys[ key ].avg = keys[ key ].avg / this.frames.length;
+			keys[key].avg = keys[key].avg / this.frames.length;
 		}
 
 		var output = keys;

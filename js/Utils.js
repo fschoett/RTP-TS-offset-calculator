@@ -6,22 +6,21 @@ function mergeTS (seconds, nanos){
 	return output
 }
 
-function byteArrayTo32Int( byteArray ){
-	if( byteArray.length != 4){
-		console.error("BYTE ARRAY - Wrong length!");
-	}
-	else{
-		return byteArray[0] + byteArray[1]* 256 + byteArray[2]*Math.pow(256,2) + byteArray[3]*Math.pow(256,3);
-	}
-}
+function calculateDeltaInTicks( rec, rtp){
+	var recStr = new BigNumber(rec);
+	var rtpStr = new BigNumber(rtp);
 
-function byteArrayTo16Int( byteArray ){
-	if( byteArray.length != 2){
-		console.error("BYTE ARRAY - Wrong length!");
-	}
-	else{
-		return byteArray[0] + byteArray[1]* 256;
-	}
+
+	var epochInTicks = recStr.multiply( CLOCK_SPEED_HZ.toString() );
+
+	var arrivalTimestampTicks = epochInTicks.mod( TICKS_TILL_OVERFLOW );
+
+	var diffInTicks = arrivalTimestampTicks.subtract( rtpStr );
+
+	var output = parseFloat ( diffInTicks.valueOf() );
+
+	return output
+
 }
 
 // PCAP PACKET HEADER + GLOBAL HEADER = 40Bytes
