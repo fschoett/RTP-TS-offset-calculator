@@ -1,4 +1,4 @@
- /*Copyright (C) 2019 Fabian Schoettler
+ /*Copyright (C) 2019 Broadcasting Center Europe
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,7 +64,10 @@ $( document ).ready(function() {
 			toggleView();
 			//var rtpOffsetCalc = new RTPTSOffsetCalculator ( new Uint8Array(evt.target.result) );
 			var arr =  new Uint8Array(evt.target.result) ;
-			rtpOffsetCalc =  new RTPTSOffsetCalculator ( arr );
+			console.time( "rtp_parser");
+			var parsedPcap = RTP_TS_Parser.parse(arr)
+			console.timeEnd( "rtp_parser");
+			rtpOffsetCalc =  new RTPTSOffsetCalculator ( parsedPcap );
 			renderResult( rtpOffsetCalc.getStats(), rtpOffsetCalc.extractChartData(), rtpOffsetCalc );
 			$("#upload_modal").removeClass("active");
 
@@ -139,10 +142,8 @@ function calculateDeltaInTicks( rec, rtp){
 	var diffInTicks = arrivalTimestampTicks.subtract( rtpStr );
 
 	var output = parseFloat ( diffInTicks.valueOf() );
-	console.log("RTP-TS Delta : ", output);
 
 	return output
-
 
 }
 

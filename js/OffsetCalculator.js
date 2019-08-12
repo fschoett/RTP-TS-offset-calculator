@@ -1,24 +1,3 @@
-const GLOBAL_PCAP_HEADER_SIZE_BYTE = 24;
-const RECORD_HEADER_SIZE = 16;
-
-//All indices are realative to the beginning of the packet heaader
-const SECONDS_INDEX_LOW = 0;
-const SECONDS_INDEX_HIGH= 3;
-
-const NANO_INDEX_LOW =  4;
-const NANO_INDEX_HIGH = 7;
-
-const PACKET_SIZE_INDEX_LOW = 8;
-const PACKET_SIZE_INDEX_HIGH= 11;
-
-const MARKER_INDEX = 43 + RECORD_HEADER_SIZE;
-
-const DST_PORT_INDEX_LOW = 36 + RECORD_HEADER_SIZE;
-const DST_PORT_INDEX_HIGH= 37 + RECORD_HEADER_SIZE;
-
-const RTP_TS_INDEX_LOW = 62;
-const RTP_TS_INDEX_HIGH= 65;
-
 const NANS_PER_SEC = 1000000000.0;
 
 var CLOCK_SPEED_HZ = 90000;
@@ -30,9 +9,16 @@ var tmpArr = [];
 
 
 class RTPTSOffsetCalculator {
-	constructor( uInt8Array ){
+	constructor( parsedPcap ){
 
-		this.dstPorts = {};
+		this.marker  = parsedPcap.markerArr;
+		this.packets = parsedPcap.packets;
+		this.dstPorts= parsedPcap.dstPorts;
+		this.recDur  = parsedPcap.recDuration;
+		this.rtpDur  = parsedPcap.rtpDurationTics;
+		this.frameNumber = parsedPcap.frameNumber;
+		this.packetNumber= parsedPcap.packetNumber;
+
 		this.offsetArray = [];
 
 		this.rtpOffsetArray = [];
@@ -44,85 +30,11 @@ class RTPTSOffsetCalculator {
 		this.rtp_diff_arr = [];
 		this.ts_diff_arr = [];
 
-		this.marker = [];
 
 		this.frames = [];
 		this.firstPacketDeltas = [];
 
-		this.packets = this.parseCapture( uInt8Array );
 
-	}
-
-	parseCapture( capture ) {
-		var output = [];
-		var currIndex = GLOBAL_PCAP_HEADER_SIZE_BYTE;
-
-		var seconds;
-		var seconds_dec;
-		var nanos;
-		var nanos_dec;
-		var rtp_ts;
-		var rtp_ts_dec;
-		var pckgLength;
-		var pckg_length_dec;
-		var dst_port;
-		var dst_port_dec;
-		var marker;
-		var has_marker;
-
-		// Extract the packet data
-		while( currIndex < capture.length ){
-
-			seconds = capture.slice( currIndex+SECONDS_INDEX_LOW, currIndex+SECONDS_INDEX_HIGH+1 );
-			seconds_dec = byteArrayTo32Int( seconds );
-
-			nanos = capture.slice( currIndex+NANO_INDEX_LOW, currIndex+NANO_INDEX_HIGH+1);
-			nanos_dec = byteArrayTo32Int( nanos );
-
-			rtp_ts = capture.slice( currIndex+RTP_TS_INDEX_LOW, currIndex+RTP_TS_INDEX_HIGH+1 );
-			rtp_ts_dec = byteArrayTo32Int( rtp_ts.reverse() );
-
-			pckgLength = capture.slice( currIndex+PACKET_SIZE_INDEX_LOW, currIndex+PACKET_SIZE_INDEX_HIGH+1 );
-			pckg_length_dec = byteArrayTo32Int(  pckgLength );
-
-			dst_port = capture.slice( currIndex+DST_PORT_INDEX_LOW, currIndex+DST_PORT_INDEX_HIGH+1 );
-			dst_port_dec = byteArrayTo16Int( dst_port.reverse() );
-
-			marker = capture.slice( currIndex+MARKER_INDEX, currIndex+MARKER_INDEX+1 );
-
-			if ( marker[0] >=  128 ){
-				has_marker = true;
-				this.marker.push( {currIndex: marker[0]} ) ;
-			}
-			else {
-				has_marker = false;
-			};
-
-			output.push( {
-				seconds_dec,
-				nanos_dec,
-				rtp_ts_dec,
-				pckg_length_dec,
-				dst_port_dec,
-				has_marker });
-			if( this.dstPorts[dst_port_dec] ) {
-				this.dstPorts[dst_port_dec] = this.dstPorts[dst_port_dec]+1
-			}
-			else { this.dstPorts[dst_port_dec] = 1 }
-
-			currIndex += pckg_length_dec + RECORD_HEADER_SIZE;
-
-		}
-
-		// Filter the packages so that only the packages with
-		// the most occuring dst port are saved
-		var most_packets_to = Object.keys( this.dstPorts ).reduce( ( a, b ) => this.dstPorts[a] > this.dstPorts[b] ? a : b);
-
-		output = output.filter( pckt =>{
-			return pckt.dst_port_dec == most_packets_to
-		});
-
-		return output;
 	}
 
 	getStats(){

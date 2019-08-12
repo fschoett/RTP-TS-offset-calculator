@@ -7,4 +7,4 @@ Here is a help which values to copy out of a RTP packet
 
 
 ## Third party
-The tool uses local copies of [jQuery](https://jquery.com/) for convenient DOM mainpulation, [Spectre.css](https://picturepan2.github.io/spectre/index.html) for the look and the [BigNumber](http://jsfromhell.com/classes/bignumber) script by Jonas Raoni Soares Silva to prevent a value overflow during offset calculation.
+The tool uses local copies of [jQuery](https://jquery.com/) for convenient DOM manipulation, [Spectre.css](https://picturepan2.github.io/spectre/index.html) for the look and the [BigNumber](http://jsfromhell.com/classes/bignumber) script by Jonas Raoni Soares Silva to prevent a value overflow during offset calculation.
