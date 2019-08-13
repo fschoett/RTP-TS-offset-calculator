@@ -112,7 +112,7 @@ function addDropListener(){
 
 function toggleView(){
 	const CONFIG = {
-		DIV_RESULT_CONTAINER_EL_ID : "result_container",
+		DIV_RESULT_CONTAINER_EL_ID : "result_container_wrapper",
 		DIV_INFO_CONTAINER_EL_ID   : "input_container"
 	}
 
