@@ -31,6 +31,8 @@ $( document ).ready(function() {
 		CLOCK_SPEED_HZ = newVals.rtpClock;
 	}
 
+	
+
 	function setIgnoreFirstPckt( newVals ){
 		console.log(" CHKBX Changed : ",newVals.ignrFirstPckt )
 		ignoreFirstPacket = newVals.ignrFirstPckt;

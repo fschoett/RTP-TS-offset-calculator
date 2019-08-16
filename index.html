@@ -132,7 +132,25 @@
 
       <div class="single_result result_table">
 
-          <h5>RTP Timestamps</h5>
+          <div class="popover popover-bottom">
+            <h5>RTP Timestamps</h5>
+            <div class="popover-container">
+              <div class="card">
+                <div class="card-header">
+                  RTP Timestamps
+                </div>
+                <div class="card-body">
+                  RTP timestamps are set by the sender of a stream. Those Timestamps
+                  are based on a clock which is different, depending on the used
+                  protocol
+                </div>
+                <div class="card-footer">
+                  <a class="doc_detail_btn btn" href="./docu.html#rtpts">More</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
     			<table  class="result_table table text-dark">
     			  <tbody  class="">
 
@@ -161,7 +179,23 @@
 
       <div class="single_result result_table">
 
-          <h5>Receiver Timestamps</h5>
+          <div class="popover popover-bottom">
+            <h5>Receiver Timestamps</h5>
+            <div class="popover-container">
+              <div class="card">
+                <div class="card-header">
+                  Receiver Timestamps
+                </div>
+                <div class="card-body">
+                  Receiver timestamps are set by the receiver of a stream. Those Timestamps
+                  should be in seconds since the regardning epoch of the used protocol
+                </div>
+                <div class="card-footer">
+                  <a class="doc_detail_btn btn" href="./docu.html#rects">More</a>
+                </div>
+              </div>
+            </div>
+          </div>
           <table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
             <tbody  class="col-mx-auto col-6 col-md-10">
 
@@ -191,7 +225,23 @@
 
   		<div class="single_result result_table">
 
-          <h5>RTP Timestamp Offset</h5>
+          <div class="popover popover-bottom">
+            <h5>RTP Timestamp Offset</h5>
+            <div class="popover-container">
+              <div class="card">
+                <div class="card-header">
+                  RTP Timestamp Offset
+                </div>
+                <div class="card-body">
+                  The difference in Ticks of a RTP timestamp to the RTP timestamp
+                  of the previous packet
+                </div>
+                <div class="card-footer">
+                  <a class=" doc_detail_btn btn" href="./docu.html#rtpoff">More</a>
+                </div>
+              </div>
+            </div>
+          </div>
     			<table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
     			  <tbody  class="col-mx-auto col-6 col-md-10">
 
@@ -219,7 +269,25 @@
   		</div>
 
       <div class="single_result result_table">
-        <h5>Rx Timestamp Offset</h5>
+
+        <div class="popover popover-bottom">
+          <h5>RX Timestamp Offset</h5>
+          <div class="popover-container">
+            <div class="card">
+              <div class="card-header">
+                RX Timestamp Offset
+              </div>
+              <div class="card-body">
+                The difference in Ticks of a Receiver timestamp to the receiver
+                timestamp of the previous packet
+              </div>
+              <div class="card-footer">
+                <a class="doc_detail_btn btn" href="./docu.html#recoff">More</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
           <tbody  class="col-mx-auto col-6 col-md-10">
 
@@ -246,7 +314,25 @@
       </div>
 
       <div class="single_result result_table">
-        <h5>RTP-Rx Timestamp Delta</h5>
+
+        <div class="popover popover-bottom">
+          <h5>RTP-Rx Timestamp Delta</h5>
+          <div class="popover-container">
+            <div class="card">
+              <div class="card-header">
+                RTP-Rx Timestamp Delta
+              </div>
+              <div class="card-body">
+                The time in Ticks a packet needed getting from the sender to
+                the Receiver based on the RTP and receiver timestamps.
+              </div>
+              <div class="card-footer">
+                <a class="doc_detail_btn btn " href="./docu.html#delta">More</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <table  class="result_table table column col-mx-auto col-12 col-md-10 text-dark">
           <tbody  class="col-mx-auto col-6 col-md-10">
 
@@ -267,7 +353,8 @@
           </tr>
           </tbody>
         </table>
-        <div id="ts_delta_global_chart" class="result_chart" ></div>
+        <div id="ts_delta_global_chart" class="result_chart" >
+        </div>
       </div>
     </div>
     </div>
