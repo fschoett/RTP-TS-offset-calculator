@@ -28,7 +28,7 @@ For more information about the different charts, hover with the mouse over the r
 
 ___
 
-### ATTENTION! Memory hungry application!
+### :warning: Attention! Memory hungry application!
 
 
 Pay attention to the RAM of your machine, as the pcap files are directly loaded to it. When using big files, it is possible that the RAM gets full fast, as the JavaScript garbage collector, responsible for removing unused data from the memory, can't be triggered manually. To free memory, close the tab and open the application again.
