@@ -51,11 +51,13 @@
       <br/>
 
       The chart should show a linear line, like shown in this screenshot
+    </div>
 
       <br/>
       <img src="./images/documentation/rtp_timestamps_good.png" class="img-responsive"/>
       <br/>
 
+    <div class="docu_content" style="width:50%; margin:auto;">
       If stairs are visible, the sender has problems with its timestamping
       and thus creates bursty signals. ALso for 2110: all RTP timestamps of a
       frame have to be equal! So the frame chart should show a peak of 1800
@@ -94,10 +96,13 @@
       shows the nanoseconds, as the seconds usually are not of interest.
       A good capture should look like This
       <br/>
+    </div>
+
         <img
           src="./images/documentation/rec_timestamps_good.png"
           class="img-responsive"
         />
+        <div class="docu_content" style="width:50%; margin:auto;">
       <br/>
       In this example the framerate of the video is 25, so the nanoseconds part
       of the timestamp will overflow after 25 frames.
@@ -105,10 +110,13 @@
       Looking at the frame chart, the values should also rise in a linear maner
       with no jumps or stairs in it. Below is an example of a bad capture,
       where the receiver struggled with the amount of packets.
+      </div>
+
       <br/>
         <img src="./images/documentation/rec_timestamps_bad.png" class="img-responsive"/>
       <br/>
 
+      <div class="docu_content" style="width:50%; margin:auto;">
       <h3>
         <a name="rtpoff"></a>
         RTP Timestamp Offset
@@ -117,9 +125,11 @@
       timestamp to its previous RTP timestamp. This should be useful to detect
       if the timestamping of the sender is correct. Below is an example of a
       good capture
+    </div>
       <br/>
         <img src="./images/documentation/rtp_timestamp_offset_good.png"class="img-responsive" />
       <br/>
+    <div class="docu_content" style="width:50%; margin:auto;">
 
       <h3>
         <a name="recoff"></a>
@@ -130,10 +140,11 @@
       the difference between the current receiver timestamp to the previous
       timestamp is displayed. A good capture should show a straight horizontal
       line, so a constant offset to the previous packet.
-
+    </div>
       <br/>
         <img src="./images/documentation/rec_timestamp_offset_good.png" class="img-responsive"/>
       <br/>
+    <div class="docu_content" style="width:50%; margin:auto;">
 
       Packet loss results in a bigger delta, which is then represented in a
       relativly big peak. But packet loss is not the only reason for a peak.
@@ -141,12 +152,11 @@
       with recording the packets and is thus introducing jitter, or that the
       jitter comes from the network itself.
       A bad capture will look like this:
-
+    </div>
       <br/>
         <img src="./images/documentation/rec_timestamps_offset_bad.png" class="img-responsive" />
       <br/>
-
-
+    <div class="docu_content" style="width:50%; margin:auto;">
 
       <h3>
         <a name="delta"></a>
@@ -179,13 +189,14 @@
     The chart should show a straight horizontal line too. If the line is going
     up or down, the two devices are not in sync to each other. Here is an
     example of a good capture:
-
+  </div>
     <br/>
       <img src="./images/documentation/delta_good.png" class="img-responsive"/>
     <br/>
+  <div class="docu_content" style="width:50%; margin:auto;">
 
     And here is one of a bad capture
-
+  </div>
     <br/>
       <img src="./images/documentation/delta_bad.png" class="img-responsive"/>
     <br/>

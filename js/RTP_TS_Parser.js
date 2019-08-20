@@ -16,7 +16,6 @@
 
 // Written by Fabian Schoettler - fabian-schoettler@outlook.com
 
-
 // Parses a pcap file by calling the parse function. The parse function needs
 // an uint8array containing the pcap data
 // Usage: RTP_TS_Parser.parse( uInt8Arr )
@@ -43,6 +42,9 @@ const RTP_TS_Parser = (function(){
   const DST_PORT_INDEX_LOW = 52;
   const DST_PORT_INDEX_HIGH= 53;
 
+  const RTP_SEQ_INDEX_LOW = 60;
+  const RTP_SEQ_INDEX_HIGH= 61;
+
   const RTP_TS_INDEX_LOW = 62;
   const RTP_TS_INDEX_HIGH= 65;
 
@@ -54,8 +56,9 @@ const RTP_TS_Parser = (function(){
     var markerArr = [];
     var dstPorts  = {};
 
-    var seconds, seconds_dec, nanos, nanos_dec, rtp_ts, rtp_ts_dec, pckgLength,
-      pckg_length_dec, dst_port, dst_port_dec, marker, has_marker;
+    var seconds, seconds_dec, nanos, nanos_dec, rtp_ts, rtp_ts_dec, seq_num,
+      seq_num_dec, pckgLength, pckg_length_dec, dst_port, dst_port_dec, marker,
+      has_marker;
 
 
     while( currIndex < uInt8Arr.length ){
@@ -75,6 +78,12 @@ const RTP_TS_Parser = (function(){
       );
 			nanos_dec = int8ToIntX( nanos );
 
+      seq_num = uInt8Arr.slice(
+        currIndex + RTP_SEQ_INDEX_LOW,
+        currIndex + RTP_SEQ_INDEX_HIGH + 1
+      );
+      seq_num_dec = int8ToIntX( seq_num.reverse() );
+
 			rtp_ts = uInt8Arr.slice(
         currIndex + RTP_TS_INDEX_LOW,
         currIndex + RTP_TS_INDEX_HIGH + 1
@@ -87,11 +96,13 @@ const RTP_TS_Parser = (function(){
       );
 			pckg_length_dec = int8ToIntX(  pckgLength );
 
-			dst_port = uInt8Arr.slice(
+
+
+      dst_port = uInt8Arr.slice(
         currIndex + DST_PORT_INDEX_LOW,
         currIndex + DST_PORT_INDEX_HIGH + 1
       );
-			dst_port_dec = int8ToIntX( dst_port.reverse() );
+      dst_port_dec = int8ToIntX( dst_port.reverse() );
 
       // Check if the packets marker bit is set
 			marker = uInt8Arr.slice(
@@ -110,6 +121,7 @@ const RTP_TS_Parser = (function(){
 				seconds_dec,
 				nanos_dec,
 				rtp_ts_dec,
+        seq_num_dec,
 				pckg_length_dec,
 				dst_port_dec,
 				has_marker

@@ -31,10 +31,10 @@ $( document ).ready(function() {
 		CLOCK_SPEED_HZ = newVals.rtpClock;
 	}
 
-	
+
 
 	function setIgnoreFirstPckt( newVals ){
-		console.log(" CHKBX Changed : ",newVals.ignrFirstPckt )
+		console.log(" Checkbox Changed : ",newVals.ignrFirstPckt )
 		ignoreFirstPacket = newVals.ignrFirstPckt;
 	}
 
@@ -62,8 +62,10 @@ $( document ).ready(function() {
 	});
 
 	$("#file_upload").on("click", ()=>{
-		var file = document.getElementById("file_input").files[0];
-		onFileUpload( file );
+		Settings.openAsync().then( ()=> {
+			var file = document.getElementById("file_input").files[0];
+			onFileUpload( file );
+		});
 	});
 
 	var inputs = document.querySelectorAll( '.inputfile' );
@@ -152,6 +154,8 @@ function onFileUpload( droppedFile ){
 		$("#upload_progress_bar").css("width", newWidth );
 	}
 
+	document.getElementById("pcap_name").textContent = droppedFile.name;
+
 	reader.readAsArrayBuffer( droppedFile );
 }
 
@@ -225,6 +229,23 @@ function renderResult( result, chartData, calculator ){
 		chart.render();
 
 	});
+
+	// Render some general stats
+	document.getElementById("duration_rtp").textContent = result["dur_rtp"];
+	document.getElementById("duration_rec").textContent = result["dur_rec"];
+	document.getElementById("packet_num").textContent   = result["packetNumber"];
+
+	// If any packets are dropped, color the displayed number red
+	var droppedPackets = result["dropped"];
+	var droppedSpan = document.getElementById("dropped_packets");
+
+	if( droppedPackets > 0 ){
+		droppedSpan.textContent = droppedPackets;
+		droppedSpan.classList.add("text-error");
+	}
+	else{
+		droppedSpan.classList.remove("text-error");
+	}
 
 }
 

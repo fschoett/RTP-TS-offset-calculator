@@ -25,6 +25,8 @@ class RTP_TS_Analyzer {
 
 		this.frames = [];
 		this.firstPacketDeltas = [];
+
+		this.droppedPackets = 0;
 	}
 
 	getStats(){
@@ -70,8 +72,17 @@ class RTP_TS_Analyzer {
 
 		var is_firstFramePacket = true;
 
+		var prev_seq_num;
+
 		// For each packet!
 		this.packets.map( (curr, i) => {
+			if( prev_seq_num ){
+				var diff = curr.seq_num_dec - prev_seq_num;
+				if( diff > 1 ){
+					this.droppedPackets += (diff - 1);
+				}
+			}
+			prev_seq_num = curr.seq_num_dec;
 
 			currSecs = curr.seconds_dec;
 			currNanos= curr.nanos_dec;
@@ -243,6 +254,10 @@ class RTP_TS_Analyzer {
 		}
 
 		var output = keys;
+		output["dur_rtp"] = this.rtpDur /CLOCK_SPEED_HZ ;
+		output["dur_rec"] = this.recDur;
+		output["packetNumber"] = this.packetNumber;
+		output["dropped"] = this.droppedPackets;
 		return output
 	}
 

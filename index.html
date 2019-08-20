@@ -37,11 +37,13 @@
 
   <div id="main_container" class="main_container container" >
 
-    <div class="heading column col-mx-auto col-12 col-md-10" style="display:flex; justify-content: center;">
+    <div
+        class="heading column col-mx-auto col-12 col-md-10"
+        style="display:flex; justify-content: center;box-shadow: 0px 1px 1px 1px rgba(0,0,0,0.03);">
       <div class="columns" style="width:100%">
         <div class="logo column col-1 "></div>
-        <h3 class="column col-10" style="text-align:center">RTP-TS Offset Calculator</h3>
-        <div class="column col-1" style="margin-top:auto">
+        <h3 class="column col-10" style="text-align:center; margin: auto">RTP-TS Offset Calculator</h3>
+        <div class="column col-1" style="margin:auto">
           <button id="btn-open_settings" class="btn">
             <i class="icon icon-menu" ></i>
           </button>
@@ -126,8 +128,35 @@
     <div id ="result_container_wrapper" class="result_container_wrapper max_dims">
       <div id="result_container" class="result_container   max_dims columns col-11 col-mx-auto">
 
-      <div class="max_dims" style="display:flex">
+      <div id="general_stats" class="max_dims" style="display:flex; flex-direction: column">
         <h5 id="btn_go_back" class="btn" style="text-align:center; margin:auto;"> Go back </h5>
+
+        <h5 id="pcap_name"></h5>
+
+        <table  class="table text-dark">
+          <tbody  class="">
+            <tr class="">
+              <td class="">Duration RTP TS</td>
+              <td class="result"><span id="duration_rtp">0</span></td>
+              <td class="">[ s ]</td>
+            </tr>
+            <tr class="">
+              <td class="">Duration Receiver TS</td>
+              <td class="result"><span id="duration_rec">0</span></td>
+              <td class="">[ s ]</td>
+            </tr>
+            <tr class="">
+              <td class="">Captured Packets: </td>
+              <td class="result"><span id="packet_num">0</span></td>
+              <td class=""></td>
+            </tr>
+            <tr class="">
+              <td class="">Dropped Packets: </td>
+              <td class="result"><span id="dropped_packets">0</span></td>
+              <td class=""></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div class="single_result result_table">

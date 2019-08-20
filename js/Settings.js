@@ -2,10 +2,13 @@ const Settings = ( function (){
 
   const CONFIG = {
     MODAL_EL_ID: "settings_modal",
+    MODAL_OL_CLASS : "modal-overlay",
+    MODAL_CLOSE_CLASS : "close_modal",
     CLOCK_SEL_EL_ID: "RTP_clock_selection",
     BTN_CONFIRM_EL_ID: "btn-settings_confirm",
     BTN_OPEN_SETTINGS_EL_ID: "btn-open_settings",
-    CHKBX_IGN_FIRST_PCKT_EL_ID: "chkbx_ign_first_pckt"
+    CHKBX_IGN_FIRST_PCKT_EL_ID: "chkbx_ign_first_pckt",
+
   }
 
   var currValues;
@@ -21,13 +24,17 @@ const Settings = ( function (){
 
   };
 
+  // Extract the values from the DOM elements of the modal
   function extractValues(){
     var output = {};
 
-    var rtpClockStr = document.getElementById( CONFIG.CLOCK_SEL_EL_ID ).value;
+    var rtpClockStr = document.getElementById(CONFIG.CLOCK_SEL_EL_ID ).value;
     var rtpClockInt = parseInt( rtpClockStr );
 
-    var ignoreFirstPckt = document.getElementById(CONFIG.CHKBX_IGN_FIRST_PCKT_EL_ID ).checked ;
+    var ignoreFirstPcktChkbx = document.getElementById(
+      CONFIG.CHKBX_IGN_FIRST_PCKT_EL_ID
+    );
+    var ignoreFirstPckt = ignoreFirstPcktChkbx.checked;
 
     output = {
       rtpClock: rtpClockInt,
@@ -81,20 +88,55 @@ const Settings = ( function (){
     is_open = true;
   }
 
+  // The callbacks are called on change, and close of the modal
   function callCallbacks(){
     for( var i=0; i<callbacks.length; i++){
       callbacks[ i ]( currValues );
     }
   }
 
+  // Register a callback
   function onChange( callback ){
     callbacks.push( callback );
   }
 
+  // Open the modal asyncronously
+  function openAsync(){
+    return new Promise( (res, rej) =>{
+      // open the modal
+      open();
+
+      // Get the dom elements of the modal
+      var modalOverlay = document.querySelector(
+        `#${CONFIG.MODAL_EL_ID} .${CONFIG.MODAL_OL_CLASS}`
+      );
+      var closeBtn = document.querySelectorAll(
+        `#${CONFIG.MODAL_EL_ID} .${CONFIG.MODAL_CLOSE_CLASS}`
+      );
+
+      // On Close, send resolve and remove EventListeners
+      var onClose = ()=>{
+        for( var i=0; i<closeBtn.length; i++ ){
+          closeBtn [i].removeEventListener( "click", onClose );
+        }
+        modalOverlay.removeEventListener( "click", onClose );
+        res();
+      };
+
+      // Register Event listeners
+      modalOverlay.addEventListener( "click" , onClose );
+      for( var i=0; i<closeBtn.length; i++ ){
+        closeBtn [i].addEventListener( "click", onClose);
+      }
+
+    });
+  }
+
   return {
-    init   : init,
-    values : currValues,
-    onChange: onChange
+    init   :  init,
+    values :  currValues,
+    onChange: onChange,
+    openAsync:openAsync
   }
 
 })();

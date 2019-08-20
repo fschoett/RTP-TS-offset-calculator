@@ -3,7 +3,7 @@
   width:100%;
 
   display: grid;
-  grid-template-rows: auto 5fr 6fr;
+  grid-template-rows: 50px 5fr 6fr;
   grid-template-areas: "heading" "result" "result";
 }
 
