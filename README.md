@@ -1,4 +1,4 @@
-# RTP-TS-Offset-calculator ![logo](images/BCE_logo_sm.png)
+# RTP-TS-Offset-calculator
 
 ![screenshot](images/screenshot.png)
 
